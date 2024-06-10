@@ -12,8 +12,8 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240609171659_initialcreate")]
-    partial class initialcreate
+    [Migration("20240610074810_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -72,6 +72,60 @@ namespace arts_core.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Event", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Banner")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EventTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventTypeId");
+
+                    b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("From")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MessageContent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Messages");
+                });
+
             modelBuilder.Entity("arts_core.Models.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -108,6 +162,35 @@ namespace arts_core.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("DeleveryTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DeliveryTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("ShipFee")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeleveryTypeId");
+
+                    b.HasIndex("PaymentTypeId");
+
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("arts_core.Models.Product", b =>
                 {
                     b.Property<string>("Id")
@@ -134,6 +217,35 @@ namespace arts_core.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("arts_core.Models.ProductEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Price")
+                        .HasColumnType("real");
+
+                    b.Property<float>("SalePrice")
+                        .HasColumnType("real");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("VariantId");
+
+                    b.ToTable("ProductEvents");
+                });
+
             modelBuilder.Entity("arts_core.Models.ProductImage", b =>
                 {
                     b.Property<int>("Id")
@@ -155,6 +267,30 @@ namespace arts_core.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductImages");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ProductId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("arts_core.Models.Type", b =>
@@ -311,6 +447,28 @@ namespace arts_core.Migrations
                     b.Navigation("Variant");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Event", b =>
+                {
+                    b.HasOne("arts_core.Models.Type", "EventType")
+                        .WithMany("Events")
+                        .HasForeignKey("EventTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EventType");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Message", b =>
+                {
+                    b.HasOne("arts_core.Models.User", "User")
+                        .WithMany("Messages")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("arts_core.Models.Order", b =>
                 {
                     b.HasOne("arts_core.Models.User", "User")
@@ -320,6 +478,23 @@ namespace arts_core.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Payment", b =>
+                {
+                    b.HasOne("arts_core.Models.Type", "DeleveryType")
+                        .WithMany()
+                        .HasForeignKey("DeleveryTypeId");
+
+                    b.HasOne("arts_core.Models.Type", "PaymentType")
+                        .WithMany("Payments")
+                        .HasForeignKey("PaymentTypeId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("DeleveryType");
+
+                    b.Navigation("PaymentType");
                 });
 
             modelBuilder.Entity("arts_core.Models.Product", b =>
@@ -333,6 +508,25 @@ namespace arts_core.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("arts_core.Models.ProductEvent", b =>
+                {
+                    b.HasOne("arts_core.Models.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("arts_core.Models.Variant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("arts_core.Models.ProductImage", b =>
                 {
                     b.HasOne("arts_core.Models.Product", "Product")
@@ -342,6 +536,25 @@ namespace arts_core.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Review", b =>
+                {
+                    b.HasOne("arts_core.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("arts_core.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("arts_core.Models.User", b =>
@@ -407,7 +620,16 @@ namespace arts_core.Migrations
 
             modelBuilder.Entity("arts_core.Models.Type", b =>
                 {
+                    b.Navigation("Events");
+
+                    b.Navigation("Payments");
+
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("arts_core.Models.User", b =>
+                {
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

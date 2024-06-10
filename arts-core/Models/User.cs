@@ -17,6 +17,7 @@
         public Type? RoleType { get; set; }
         public int RestrictedTypeId { get; set; }
         public Type? RestrictedType { get; set; }
+        public ICollection<Message>? Messages { get; set; }
 
     }
 }

@@ -18,6 +18,10 @@ namespace arts_core.Data
         public DbSet<Variant> Variants { get; set; }
         public DbSet<VariantAttribute> VariantAttributes { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Event> Events { get; set; }
+        public DbSet<ProductEvent> ProductEvents { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,6 +30,12 @@ namespace arts_core.Data
                 .HasOne(u => u.RoleType)
                 .WithMany(rt => rt.Users)
                 .HasForeignKey(u => u.RoleTypeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.PaymentType)
+                .WithMany(rt => rt.Payments)
+                .HasForeignKey(p => p.PaymentTypeId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
 
