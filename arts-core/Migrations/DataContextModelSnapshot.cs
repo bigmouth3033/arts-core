@@ -405,10 +405,10 @@ namespace arts_core.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RestrictedTypeId")
+                    b.Property<int?>("RestrictedTypeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("RoleTypeId")
+                    b.Property<int?>("RoleTypeId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -665,15 +665,12 @@ namespace arts_core.Migrations
                 {
                     b.HasOne("arts_core.Models.Type", "RestrictedType")
                         .WithMany()
-                        .HasForeignKey("RestrictedTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("RestrictedTypeId");
 
                     b.HasOne("arts_core.Models.Type", "RoleType")
                         .WithMany("Users")
                         .HasForeignKey("RoleTypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("RestrictedType");
 

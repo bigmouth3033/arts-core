@@ -123,8 +123,8 @@ namespace arts_core.Migrations
                     Verifired = table.Column<bool>(type: "bit", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Active = table.Column<bool>(type: "bit", nullable: false),
-                    RoleTypeId = table.Column<int>(type: "int", nullable: false),
-                    RestrictedTypeId = table.Column<int>(type: "int", nullable: false)
+                    RoleTypeId = table.Column<int>(type: "int", nullable: true),
+                    RestrictedTypeId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -133,8 +133,7 @@ namespace arts_core.Migrations
                         name: "FK_Users_Types_RestrictedTypeId",
                         column: x => x.RestrictedTypeId,
                         principalTable: "Types",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Users_Types_RoleTypeId",
                         column: x => x.RoleTypeId,

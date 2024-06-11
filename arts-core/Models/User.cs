@@ -13,9 +13,9 @@
         public DateTime CreatedAt => DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public bool Active { get; set; } = false ;
-        public int RoleTypeId { get; set; }
+        public int? RoleTypeId { get; set; }
         public Type? RoleType { get; set; }
-        public int RestrictedTypeId { get; set; }
+        public int? RestrictedTypeId { get; set; }
         public Type? RestrictedType { get; set; }
         public ICollection<Order>? Orders { get; set; }
         public ICollection<Message>? Messages { get; set; }

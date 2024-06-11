@@ -20,7 +20,7 @@ namespace arts_core.Interfaces
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _dataContext.Dispose();
         }
 
         public void SaveChanges()

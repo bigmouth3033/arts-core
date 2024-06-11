@@ -7,16 +7,17 @@ namespace arts_core.Interfaces
     public interface IUserRepository : IRepository<User>
     {
         Task<IEnumerable<User>> GetAllUsersAsync();
-        Task<User> GetUserByIdAsync(int userId);        
+        Task<User> GetUserByIdAsync(int userId);
         void CreateOwner(User owner);
         void UpdateOwner(User owner);
         void DeleteOwner(User owner);
     }
-    public class UserRepository: GenericRepository<User>, IUserRepository
-    {        
-        public UserRepository(DataContext dataContext): base(dataContext)
-        {          
-            
+    public class UserRepository : GenericRepository<User>, IUserRepository
+    {
+        private readonly ILogger<UserRepository> _logger;
+        public UserRepository(DataContext dataContext, ILogger<UserRepository> logger) : base(dataContext)
+        {
+            _logger = logger;
         }
 
         public void CreateOwner(User owner)
@@ -41,9 +42,9 @@ namespace arts_core.Interfaces
         public async Task<User> GetUserByIdAsync(int ownerId)
         {
             return await _context.Users.FindAsync(ownerId);
-        }       
+        }
 
-      
+
     }
 
 }
