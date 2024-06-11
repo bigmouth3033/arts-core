@@ -22,6 +22,8 @@ namespace arts_core.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<ProductEvent> ProductEvents { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<Exchange> Exchanges { get; set; }
+        public DbSet<Refund> Refunds { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,6 +38,25 @@ namespace arts_core.Data
                 .HasOne(p => p.PaymentType)
                 .WithMany(rt => rt.Payments)
                 .HasForeignKey(p => p.PaymentTypeId)
+                .OnDelete(DeleteBehavior.NoAction);           
+
+
+            modelBuilder.Entity<Exchange>()
+                .HasOne(e => e.OriginalOrder)
+                .WithMany(o => o.Exchanges)
+                .HasForeignKey(e => e.OriginalOrderId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Refund>()
+                .HasOne(r => r.Payment)
+                .WithMany(p => p.Refunds)
+                .HasForeignKey(r => r.PaymentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
 

@@ -12,7 +12,7 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240610074810_InitialCreate")]
+    [Migration("20240611095007_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -100,6 +100,42 @@ namespace arts_core.Migrations
                     b.ToTable("Events");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Exchange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExchangeDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NewOrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("OriginalOrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ReasonExchange")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NewOrderId");
+
+                    b.HasIndex("OriginalOrderId");
+
+                    b.ToTable("Exchanges");
+                });
+
             modelBuilder.Entity("arts_core.Models.Message", b =>
                 {
                     b.Property<int>("Id")
@@ -128,11 +164,8 @@ namespace arts_core.Migrations
 
             modelBuilder.Entity("arts_core.Models.Order", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Address")
                         .IsRequired()
@@ -148,6 +181,9 @@ namespace arts_core.Migrations
                     b.Property<int>("OrderStatus")
                         .HasColumnType("int");
 
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -156,6 +192,8 @@ namespace arts_core.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PaymentId");
 
                     b.HasIndex("UserId");
 
@@ -170,9 +208,6 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("DeleveryTypeId")
-                        .HasColumnType("int");
-
                     b.Property<int>("DeliveryTypeId")
                         .HasColumnType("int");
 
@@ -184,7 +219,7 @@ namespace arts_core.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DeleveryTypeId");
+                    b.HasIndex("DeliveryTypeId");
 
                     b.HasIndex("PaymentTypeId");
 
@@ -267,6 +302,30 @@ namespace arts_core.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductImages");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Refund", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.ToTable("Refunds");
                 });
 
             modelBuilder.Entity("arts_core.Models.Review", b =>
@@ -458,6 +517,25 @@ namespace arts_core.Migrations
                     b.Navigation("EventType");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Exchange", b =>
+                {
+                    b.HasOne("arts_core.Models.Order", "NewOrder")
+                        .WithMany()
+                        .HasForeignKey("NewOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("arts_core.Models.Order", "OriginalOrder")
+                        .WithMany("Exchanges")
+                        .HasForeignKey("OriginalOrderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("NewOrder");
+
+                    b.Navigation("OriginalOrder");
+                });
+
             modelBuilder.Entity("arts_core.Models.Message", b =>
                 {
                     b.HasOne("arts_core.Models.User", "User")
@@ -471,20 +549,30 @@ namespace arts_core.Migrations
 
             modelBuilder.Entity("arts_core.Models.Order", b =>
                 {
-                    b.HasOne("arts_core.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                    b.HasOne("arts_core.Models.Payment", "Payment")
+                        .WithMany("Orders")
+                        .HasForeignKey("PaymentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("arts_core.Models.User", "User")
+                        .WithMany("Orders")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("arts_core.Models.Payment", b =>
                 {
-                    b.HasOne("arts_core.Models.Type", "DeleveryType")
+                    b.HasOne("arts_core.Models.Type", "DeliveryType")
                         .WithMany()
-                        .HasForeignKey("DeleveryTypeId");
+                        .HasForeignKey("DeliveryTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("arts_core.Models.Type", "PaymentType")
                         .WithMany("Payments")
@@ -492,7 +580,7 @@ namespace arts_core.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("DeleveryType");
+                    b.Navigation("DeliveryType");
 
                     b.Navigation("PaymentType");
                 });
@@ -536,6 +624,25 @@ namespace arts_core.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Refund", b =>
+                {
+                    b.HasOne("arts_core.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("arts_core.Models.Payment", "Payment")
+                        .WithMany("Refunds")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("arts_core.Models.Review", b =>
@@ -611,6 +718,18 @@ namespace arts_core.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Order", b =>
+                {
+                    b.Navigation("Exchanges");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Payment", b =>
+                {
+                    b.Navigation("Orders");
+
+                    b.Navigation("Refunds");
+                });
+
             modelBuilder.Entity("arts_core.Models.Product", b =>
                 {
                     b.Navigation("ProductImages");
@@ -630,6 +749,8 @@ namespace arts_core.Migrations
             modelBuilder.Entity("arts_core.Models.User", b =>
                 {
                     b.Navigation("Messages");
+
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }
