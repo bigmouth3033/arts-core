@@ -11,6 +11,7 @@ namespace arts_core.Interfaces
         public CustomResult CreateProduct(CreateProduct product);
 
     }
+
     public class ProductRepository : GenericRepository<Product>, IProductRepository
     {
         private readonly ILogger<ProductRepository> _logger;
@@ -32,6 +33,8 @@ namespace arts_core.Interfaces
                 var variant = JsonConvert.DeserializeObject<RequestModels.Variant>(json);
                 product.Variants.Add(variant);
             }
+
+
 
             return new CustomResult(200, "success", product);
         }
