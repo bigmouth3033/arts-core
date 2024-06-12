@@ -57,11 +57,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     };
 });
 
-//builder.Services.AddDbContext<DatabaseContext>(option =>
-//{
-//    option.UseSqlServer(builder.Configuration.GetConnectionString("MyConnection"));
+builder.Services.AddDbContext<DataContext>(option =>
+{
+    option.UseSqlServer(builder.Configuration.GetConnectionString("MyConnection"));
 
-//});
+});
+
+builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<ICategoryRepository, CategoryRepository>();
+builder.Services.AddTransient<ITypeRepository, TypeRepository>();
+builder.Services.AddTransient<IProductRepository, ProductRepository>();
 
 var app = builder.Build();
 

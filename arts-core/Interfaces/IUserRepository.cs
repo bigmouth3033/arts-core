@@ -12,6 +12,7 @@ namespace arts_core.Interfaces
         void UpdateOwner(User owner);
         void DeleteOwner(User owner);
     }
+    
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
         private readonly ILogger<UserRepository> _logger;

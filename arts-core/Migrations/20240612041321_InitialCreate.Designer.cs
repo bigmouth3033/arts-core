@@ -12,7 +12,7 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240611141421_InitialCreate")]
+    [Migration("20240612041321_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
