@@ -12,6 +12,7 @@ namespace arts_core.Interfaces
         IEnumerable<T> Find(Expression<Func<T, bool>> predicate);
         void SaveChanges();        
     }
+
     public abstract class GenericRepository<T> : IRepository<T> where T : class
     {
         protected DataContext _context;

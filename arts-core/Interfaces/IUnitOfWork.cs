@@ -2,6 +2,7 @@
 
 namespace arts_core.Interfaces
 {
+    //nhom tat ca repositories lại với nhau để đám bảo tính nhất quán của dữ liệu
     public interface IUnitOfWork : IDisposable
     {
         IUserRepository UserRepository { get; }
@@ -19,7 +20,6 @@ namespace arts_core.Interfaces
         public IUserRepository UserRepository { get; set; }
         public ICategoryRepository CategoryRepository { get; set; }
         public ITypeRepository TypeRepository { get; set; }
-
         public IProductRepository ProductRepository { get; set; }
 
 
@@ -30,7 +30,6 @@ namespace arts_core.Interfaces
             CategoryRepository = categoryRepository;
             TypeRepository = typeRepository;
             ProductRepository = productRepository;
-            
         }        
 
         public void Dispose()

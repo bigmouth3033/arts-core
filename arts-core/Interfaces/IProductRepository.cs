@@ -35,8 +35,42 @@ namespace arts_core.Interfaces
             }
 
 
+            var newProduct = new Product()
+            {
+                CategoryId = product.Category,
+                Name = product.ProductName,
+                Description = product.Description,
 
-            return new CustomResult(200, "success", product);
+            };
+
+            foreach (dynamic variant in product.VariantDetails)
+            {
+                var newVariant = new Models.Variant() { Active = true };
+
+                newVariant.Product = newProduct;
+
+                _context.Variants.Add(newVariant);
+
+
+                for (int i = 0; i < product.Variants.Count; i++)
+                {
+                    dynamic option = product.Variants.ToArray()[i];
+                    var newVariantAttriBute = new VariantAttribute()
+                    {
+
+                        AttributeTypeId = option.Id,
+                        AttributeValue = variant.Variant[i],
+                    };
+                    newVariantAttriBute.Variant = newVariant;
+                    _context.VariantAttributes.Add(newVariantAttriBute);
+                }
+            }
+
+            _context.Products.Add(newProduct);
+
+            return new CustomResult(200, "success", newProduct);
         }
+
+    
     }
 }

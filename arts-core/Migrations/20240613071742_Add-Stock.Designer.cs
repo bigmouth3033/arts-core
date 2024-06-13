@@ -12,8 +12,8 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240612041321_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20240613071742_Add-Stock")]
+    partial class AddStock
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -228,8 +228,11 @@ namespace arts_core.Migrations
 
             modelBuilder.Entity("arts_core.Models.Product", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("ActiveDate")
                         .HasColumnType("datetime2");
@@ -293,9 +296,8 @@ namespace arts_core.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -336,9 +338,8 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -350,6 +351,30 @@ namespace arts_core.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Stock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<float>("CostPerItem")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VariantId");
+
+                    b.ToTable("Stocks");
                 });
 
             modelBuilder.Entity("arts_core.Models.Type", b =>
@@ -443,9 +468,8 @@ namespace arts_core.Migrations
                     b.Property<float>("Price")
                         .HasColumnType("real");
 
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Quanity")
                         .HasColumnType("int");
@@ -473,6 +497,12 @@ namespace arts_core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AttributeTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AttributeValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Priority")
                         .HasColumnType("int");
 
                     b.Property<int>("VariantId")
@@ -664,6 +694,17 @@ namespace arts_core.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Stock", b =>
+                {
+                    b.HasOne("arts_core.Models.Variant", "Variant")
+                        .WithMany("Stocks")
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("arts_core.Models.User", b =>
                 {
                     b.HasOne("arts_core.Models.Type", "RestrictedType")
@@ -748,6 +789,11 @@ namespace arts_core.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Variant", b =>
+                {
+                    b.Navigation("Stocks");
                 });
 #pragma warning restore 612, 618
         }

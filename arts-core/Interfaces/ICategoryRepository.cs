@@ -9,12 +9,12 @@ namespace arts_core.Interfaces
         Task<CustomResult> GetAllCategories();
 
         CustomResult CreateNewCategory(Category category);
-
-    
     }
+
     public class CategoryRepository : GenericRepository<Category>, ICategoryRepository
     {
         private readonly ILogger<CategoryRepository> _logger;
+
         public CategoryRepository(DataContext dataContext, ILogger<CategoryRepository> logger) : base(dataContext)
         {
             _logger = logger;

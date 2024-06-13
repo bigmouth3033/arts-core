@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public int UserId { get; set; }
         public User? User { get; set; }
-        public string ProductId { get; set; } = string.Empty;
+        public int ProductId { get; set; }
         public Product? Product { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace arts_core.RequestModels
     {
         public string ProductName {  get; set; } 
 
-        public int CategoryId {  get; set; }
+        public int Category {  get; set; }
 
         public string? Description { get; set; } 
 

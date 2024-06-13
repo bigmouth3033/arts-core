@@ -24,6 +24,8 @@ namespace arts_core.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<Exchange> Exchanges { get; set; }
         public DbSet<Refund> Refunds { get; set; }
+        public DbSet<Stock> Stocks {  get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -58,6 +60,8 @@ namespace arts_core.Data
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Stock>().HasOne(s => s.Variant).WithMany(v => v.Stocks).HasForeignKey(s => s.VariantId).OnDelete(DeleteBehavior.NoAction);
         }
 
     }

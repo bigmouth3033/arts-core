@@ -22,6 +22,8 @@ namespace arts_core.Controllers
         {
             var customResult = _unitOfWork.ProductRepository.CreateProduct(product);
 
+            _unitOfWork.SaveChanges();
+
             return Ok(customResult);
         }
     }

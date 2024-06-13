@@ -12,8 +12,8 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240612132130_ChangeVariantAttribute")]
-    partial class ChangeVariantAttribute
+    [Migration("20240612172542_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -228,8 +228,11 @@ namespace arts_core.Migrations
 
             modelBuilder.Entity("arts_core.Models.Product", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("ActiveDate")
                         .HasColumnType("datetime2");
@@ -293,9 +296,8 @@ namespace arts_core.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -336,9 +338,8 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -443,9 +444,8 @@ namespace arts_core.Migrations
                     b.Property<float>("Price")
                         .HasColumnType("real");
 
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Quanity")
                         .HasColumnType("int");
@@ -474,6 +474,9 @@ namespace arts_core.Migrations
 
                     b.Property<int>("AttributeTypeId")
                         .HasColumnType("int");
+
+                    b.Property<string>("AttributeValue")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Priority")
                         .HasColumnType("int");
