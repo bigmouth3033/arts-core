@@ -57,16 +57,51 @@ namespace arts_core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("IconImage")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Arts"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Gift Articles"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Greeting Cards"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Dolls"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Files"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Hand Bags"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Wallets"
+                        });
                 });
 
             modelBuilder.Entity("arts_core.Models.Event", b =>
@@ -78,17 +113,20 @@ namespace arts_core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Banner")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<int>("EventTypeId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.HasKey("Id");
 
@@ -106,18 +144,17 @@ namespace arts_core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("ExchangeDate")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<string>("NewOrderId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("OriginalOrderId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ReasonExchange")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
@@ -141,12 +178,15 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
                     b.Property<string>("From")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MessageContent")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
@@ -165,11 +205,14 @@ namespace arts_core.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("MyProperty")
@@ -182,7 +225,6 @@ namespace arts_core.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
@@ -231,19 +273,25 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("ActiveDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("WarrantyDuration")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -290,7 +338,6 @@ namespace arts_core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ImageName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ProductId")
@@ -312,7 +359,6 @@ namespace arts_core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("OrderId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("PaymentId")
@@ -361,6 +407,11 @@ namespace arts_core.Migrations
                     b.Property<float>("CostPerItem")
                         .HasColumnType("real");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
@@ -383,16 +434,52 @@ namespace arts_core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NameType")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Types");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Size",
+                            NameType = "VariantAttribute"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Color",
+                            NameType = "VariantAttribute"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Material",
+                            NameType = "VariantAttribute"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Admin",
+                            NameType = "UserRole"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Employee",
+                            NameType = "UserRole"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Customer",
+                            NameType = "UserRole"
+                        });
                 });
 
             modelBuilder.Entity("arts_core.Models.User", b =>
@@ -407,27 +494,24 @@ namespace arts_core.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Avatar")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Fullname")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("RestrictedTypeId")
@@ -462,6 +546,11 @@ namespace arts_core.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
                     b.Property<float>("Price")
                         .HasColumnType("real");
 
@@ -475,7 +564,6 @@ namespace arts_core.Migrations
                         .HasColumnType("real");
 
                     b.Property<string>("VariantImage")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -548,15 +636,12 @@ namespace arts_core.Migrations
                 {
                     b.HasOne("arts_core.Models.Order", "NewOrder")
                         .WithMany()
-                        .HasForeignKey("NewOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("NewOrderId");
 
                     b.HasOne("arts_core.Models.Order", "OriginalOrder")
                         .WithMany("Exchanges")
                         .HasForeignKey("OriginalOrderId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("NewOrder");
 
@@ -647,7 +732,7 @@ namespace arts_core.Migrations
                     b.HasOne("arts_core.Models.Product", "Product")
                         .WithMany("ProductImages")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Product");
@@ -657,9 +742,7 @@ namespace arts_core.Migrations
                 {
                     b.HasOne("arts_core.Models.Order", "Order")
                         .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("OrderId");
 
                     b.HasOne("arts_core.Models.Payment", "Payment")
                         .WithMany("Refunds")
@@ -738,7 +821,7 @@ namespace arts_core.Migrations
                         .IsRequired();
 
                     b.HasOne("arts_core.Models.Variant", "Variant")
-                        .WithMany()
+                        .WithMany("VariantAttributes")
                         .HasForeignKey("VariantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -791,6 +874,8 @@ namespace arts_core.Migrations
             modelBuilder.Entity("arts_core.Models.Variant", b =>
                 {
                     b.Navigation("Stocks");
+
+                    b.Navigation("VariantAttributes");
                 });
 #pragma warning restore 612, 618
         }

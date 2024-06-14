@@ -62,6 +62,74 @@ namespace arts_core.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Stock>().HasOne(s => s.Variant).WithMany(v => v.Stocks).HasForeignKey(s => s.VariantId).OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ProductImage>().HasOne(i => i.Product).WithMany(p => p.ProductImages).HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Event>(option =>
+            {
+                option.Property(e => e.StartDate).HasDefaultValueSql("GETDATE()");
+                option.Property(e => e.EndDate).HasDefaultValueSql("GETDATE()");
+            });
+
+            modelBuilder.Entity<Exchange>(option =>
+            {
+                option.Property(e => e.ExchangeDate).HasDefaultValueSql("GETDATE()");        
+            });
+
+
+            modelBuilder.Entity<Message>(option =>
+            {
+                option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+            });
+
+            modelBuilder.Entity<Order>(option =>
+            {
+                option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+            });
+
+            modelBuilder.Entity<Product>(option =>
+            {
+                option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+            });
+
+            modelBuilder.Entity<Stock>(option =>
+            {
+                option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+            });
+
+            modelBuilder.Entity<Variant>(option =>
+            {
+                option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+            });
+
+            modelBuilder.Entity<Models.Type>(option =>
+            {
+                option.HasData([
+                    new Models.Type(){Id = 1,Name = "Size", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 2, Name = "Color", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 3, Name = "Material", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 4, Name = "Admin", NameType = "UserRole"},
+                    new Models.Type(){Id = 5, Name = "Employee", NameType = "UserRole"},
+                    new Models.Type(){Id = 6, Name = "Customer", NameType = "UserRole"},
+                    ]);
+            });
+
+            modelBuilder.Entity<Category>(option =>
+            {
+                option.HasData([
+                    new Category(){Id = 1, Name="Arts"},
+                    new Category(){Id = 2, Name="Gift Articles"},
+                    new Category(){Id = 3, Name="Greeting Cards"},
+                    new Category(){Id = 4, Name="Dolls"},
+                    new Category(){Id = 5, Name="Files"},
+                    new Category(){Id = 6, Name="Hand Bags"},
+                    new Category(){Id = 7, Name="Wallets"},
+                    ]);
+            });
+
+
+
+
         }
 
     }

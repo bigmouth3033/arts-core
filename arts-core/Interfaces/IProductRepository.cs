@@ -15,9 +15,11 @@ namespace arts_core.Interfaces
     public class ProductRepository : GenericRepository<Product>, IProductRepository
     {
         private readonly ILogger<ProductRepository> _logger;
-        public ProductRepository(DataContext dataContext, ILogger<ProductRepository> logger) : base(dataContext)
+        private readonly IWebHostEnvironment _env;
+        public ProductRepository(DataContext dataContext, ILogger<ProductRepository> logger, IWebHostEnvironment env) : base(dataContext)
         {
             _logger = logger;
+            _env = env;
         }
 
         public CustomResult CreateProduct(CreateProduct product)
@@ -34,21 +36,52 @@ namespace arts_core.Interfaces
                 product.Variants.Add(variant);
             }
 
-
             var newProduct = new Product()
             {
                 CategoryId = product.Category,
                 Name = product.ProductName,
                 Description = product.Description,
-
             };
+
+            ICollection<string> imageNameList = new List<string>();
+
+            foreach (var image in product.Images)
+            {
+                var fileName = DateTime.Now.Ticks + image.FileName;
+                imageNameList.Add(fileName);
+                var uploadPath = Path.Combine(_env.WebRootPath, "images");
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                image.CopyTo(stream);
+
+                var newImage = new ProductImage
+                {
+                    ImageName = fileName,
+                    Product = newProduct
+                };
+
+                _context.ProductImages.Add(newImage);
+            }
 
             foreach (dynamic variant in product.VariantDetails)
             {
-                var newVariant = new Models.Variant() { Active = true };
+                var newVariant = new Models.Variant() {
+                    Active = true,
+                    VariantImage = variant.Image != null ? imageNameList.ToArray()[variant.Image] : null,
+                    Price = variant.SellPrice,
+                    SalePrice = variant.ComparePrice,
+                };
+
+                var stock = new Stock
+                {
+                    CostPerItem = variant.BeginFund,
+                    Quantity = variant.Inventory,
+                    Variant = newVariant
+                };
 
                 newVariant.Product = newProduct;
-
+                _context.Stocks.Add(stock);
                 _context.Variants.Add(newVariant);
 
 
@@ -57,9 +90,9 @@ namespace arts_core.Interfaces
                     dynamic option = product.Variants.ToArray()[i];
                     var newVariantAttriBute = new VariantAttribute()
                     {
-
                         AttributeTypeId = option.Id,
                         AttributeValue = variant.Variant[i],
+                        Priority = i + 1
                     };
                     newVariantAttriBute.Variant = newVariant;
                     _context.VariantAttributes.Add(newVariantAttriBute);

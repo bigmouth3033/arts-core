@@ -10,7 +10,7 @@
 
         public int Quantity { get; set; }
 
-        public DateTime CreatedAt => DateTime.Now;
+        public DateTime CreatedAt { get; set; }
 
         public virtual Variant? Variant { get; set; }
     }

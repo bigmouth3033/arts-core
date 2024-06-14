@@ -5,13 +5,15 @@
         public int Id { get; set; }
         public int ProductId { get; set; }
         public Product? Product { get; set; }
-        public string VariantImage { get; set; } = string.Empty;
+        public string? VariantImage { get; set; }
         public int Quanity { get; set; }
         public float Price { get; set; }
         public float SalePrice { get; set; }
-        public DateTime CreatedAt => DateTime.Now;
+        public DateTime CreatedAt { get; set; } 
         public bool Active { get; set; } = true;
 
-        public ICollection<Stock>? Stocks { get; set; }
+        public virtual ICollection<VariantAttribute>? VariantAttributes { get; set; }
+
+        public virtual ICollection<Stock>? Stocks { get; set; }
     }
 }
