@@ -15,5 +15,6 @@
         public virtual ICollection<VariantAttribute>? VariantAttributes { get; set; }
 
         public virtual ICollection<Stock>? Stocks { get; set; }
+        public virtual ICollection<Type>? Types { get; set; }
     }
 }

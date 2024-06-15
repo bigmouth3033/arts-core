@@ -8,5 +8,7 @@
         public ICollection<User>? Users { get; set; }
         public ICollection<Payment>? Payments { get; set; }
         public ICollection<Event>? Events { get; set; }
+        public virtual ICollection<Variant>? Variants { get; set; }
+
     }
 }
