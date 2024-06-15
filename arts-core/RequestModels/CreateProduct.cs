@@ -16,7 +16,9 @@ namespace arts_core.RequestModels
 
         public string? Unit {  get; set; }
 
-        public string? ActiveDay {  get; set; }
+        public bool Active{  get; set; }
+
+        public int Warranty { get; set; }
 
         public ICollection<IFormFile>? Images { get; set; }
 

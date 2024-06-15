@@ -1,5 +1,7 @@
 ﻿using arts_core.Interfaces;
 using arts_core.Models;
+using arts_core.RequestModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,5 +30,28 @@ namespace arts_core.Controllers
             _unitOfWork.SaveChanges();
             return Ok("");
         }
+
+        [HttpPost]
+        [Route("create-employee")]
+        [Authorize(Roles ="Admin")]
+        public async Task<IActionResult> CreateEmployee(CreateEmployee account)
+        {
+            var customResult = await _unitOfWork.UserRepository.CreateEmployee(account);
+
+            _unitOfWork.SaveChanges();
+
+            return Ok(customResult);
+        }
+
+        [HttpGet]
+        [Route("get-employee")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllEmployees([FromQuery] int pageNumber, [FromQuery] int pageSize = 20)
+        {
+            var customPaging = await _unitOfWork.UserRepository.GetAllEmployees(pageNumber, pageSize);
+
+            return Ok(customPaging);
+        }
+
     }
 }

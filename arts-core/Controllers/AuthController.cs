@@ -28,13 +28,12 @@ namespace arts_core.Controllers
 
         [HttpGet]
         [Route("admin")]
-        [Authorize(Roles = "Admin")]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles ="Admin,Employee")]
         public async Task<IActionResult> GetAdmin()
         {
             var email = User.FindFirst(ClaimTypes.Email).Value;
 
-            var customResult = _unitOfWork.UserRepository.GetAdmin(email);
+            var customResult = await _unitOfWork.UserRepository.GetAdmin(email);
 
             return Ok(customResult);
         }
