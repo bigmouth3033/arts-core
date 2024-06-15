@@ -7,14 +7,13 @@
         public Product? Product { get; set; }
         public string? VariantImage { get; set; }
         public int Quanity { get; set; }
+        public int AvailableQuanity { get; set; }
         public float Price { get; set; }
         public float SalePrice { get; set; }
         public DateTime CreatedAt { get; set; } 
         public bool Active { get; set; } = true;
-
         public virtual ICollection<VariantAttribute>? VariantAttributes { get; set; }
-
-        public virtual ICollection<Stock>? Stocks { get; set; }
+        
         public virtual ICollection<Type>? Types { get; set; }
     }
 }

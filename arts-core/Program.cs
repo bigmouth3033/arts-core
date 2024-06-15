@@ -66,6 +66,7 @@ builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<ICategoryRepository, CategoryRepository>();
 builder.Services.AddTransient<ITypeRepository, TypeRepository>();
 builder.Services.AddTransient<IProductRepository, ProductRepository>();
+builder.Services.AddTransient<ICartRepository, CartRepository>();
 builder.Services.AddTransient<ISeed, Seed>();
 
 var app = builder.Build();

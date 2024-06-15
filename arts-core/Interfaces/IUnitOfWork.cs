@@ -10,6 +10,7 @@ namespace arts_core.Interfaces
         ITypeRepository TypeRepository { get; }
 
         IProductRepository ProductRepository { get; }
+        ICartRepository CartRepository { get; }
 
         void SaveChanges();
     }
@@ -21,15 +22,17 @@ namespace arts_core.Interfaces
         public ICategoryRepository CategoryRepository { get; set; }
         public ITypeRepository TypeRepository { get; set; }
         public IProductRepository ProductRepository { get; set; }
+        public ICartRepository CartRepository { get; set; }
 
 
-        public UnitOfWork(DataContext dataContext, IUserRepository userRepository, ICategoryRepository categoryRepository, ITypeRepository typeRepository, IProductRepository productRepository)
+        public UnitOfWork(DataContext dataContext, IUserRepository userRepository, ICategoryRepository categoryRepository, ITypeRepository typeRepository, IProductRepository productRepository,ICartRepository cartRepository)
         {
             _dataContext = dataContext;
             UserRepository = userRepository;
             CategoryRepository = categoryRepository;
             TypeRepository = typeRepository;
             ProductRepository = productRepository;
+            CartRepository = cartRepository;
         }        
 
         public void Dispose()

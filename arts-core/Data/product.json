@@ -1,77 +1,150 @@
 ﻿[
-    {
+  {
+    "Id": "0",
+    "Name": "Beferr Gifts for Women Birthday Gifts Galaxy Rose Enchanted Crystal Flower",
+    "Description": "Eternal blooming galaxy flower combines love and beauty in one, pink gift box with a dome magic rose that is romantic and elegant.",
+    "CreatedAt": "2024-06-14 18:11:11.0333333",
+    "IsActive": "true",
+    "CategoryId": "2",
+    "WarrantyDuration": "5",
+    "Variants": [
+      {
         "Id": "0",
-        "Name": "Beferr Gifts for Women Birthday Gifts Galaxy Rose Enchanted Crystal Flower",
-        "Description": "Eternal blooming galaxy flower combines love and beauty in one, pink gift box with a dome magic rose that is romantic and elegant.",
-        "CreatedAt": "2024-06-14 18:11:11.0333333",
-        "IsActive": "true",
-        "CategoryId": "2",
-        "WarrantyDuration": "5",
-        "Variants": [
-            {
-                "Id": "0",
-                "VariantImage": "gagaga.jpg",
-                "Quanity": "10",
-                "Price": "100",
-                "SalePrice": "120",
-                "CreateAt": "2024-06-14 18:11:11.0333333",
-                "Active": "true"
-            }
-        ]
-    },
-    {
+        "VariantImage": "gagaga.jpg",
+        "Quanity": "50",
+        "Price": "100",
+        "SalePrice": "70",
+        "AvailableQuanity": "50",
+        "CreateAt": "2024-06-14 18:11:11.0333333",
+        "Active": "true"
+      }
+    ]
+  },
+  {
+    "Id": "0",
+    "Name": "Gift Items Metal Krishna Idol Murti with Kamdhenu Cow - Gold Plated Showpiece Articles for Home Decor",
+    "Description": "Considered a must have element in Vastu. Kamadhenu Cow is considered a wish granting symbol. Place anywhere in house or workplace for Health, Wealth and Prosperity",
+    "CreatedAt": "2024-06-14 18:11:11.0333333",
+    "IsActive": "true",
+    "CategoryId": "2",
+    "WarrantyDuration": "8",
+    "Variants": [
+      {
         "Id": "0",
-        "Name": "Gift Items Metal Krishna Idol Murti with Kamdhenu Cow - Gold Plated Showpiece Articles for Home Decor",
-        "Description": "Considered a must have element in Vastu. Kamadhenu Cow is considered a wish granting symbol. Place anywhere in house or workplace for Health, Wealth and Prosperity",
-        "CreatedAt": "2024-06-14 18:11:11.0333333",
-        "IsActive": "true",
-        "CategoryId": "2",
-        "WarrantyDuration": "8"
-    },
-    {
+        "VariantImage": "gagaga.jpg",
+        "Quanity": "30",
+        "Price": "70",
+        "SalePrice": "30",
+        "AvailableQuanity": "30",
+        "CreateAt": "2024-06-14 18:11:11.0333333",
+        "Active": "true"
+      }
+    ]
+  },
+  {
+    "Id": "0",
+    "Name": "4Pcs Horror Classic Movie Characters Pillow Covers",
+    "Description": "Halloween Horror Pillow Covers Set: The package includes 4 different horror movie characters pillowcase, which are great home decoration for sofa, couch, bed, car, living room, etc. (NOTE: COVERS ONLY, PILLOWS OR FILLERS ARE NOT INCLUDED.)",
+    "CreatedAt": "2024-06-14 18:11:11.0333333",
+    "IsActive": "true",
+    "CategoryId": "2",
+    "WarrantyDuration": "7",
+    "Variants": [
+      {
         "Id": "0",
-        "Name": "4Pcs Horror Classic Movie Characters Pillow Covers",
-        "Description": "Halloween Horror Pillow Covers Set: The package includes 4 different horror movie characters pillowcase, which are great home decoration for sofa, couch, bed, car, living room, etc. (NOTE: COVERS ONLY, PILLOWS OR FILLERS ARE NOT INCLUDED.)",
-        "CreatedAt": "2024-06-14 18:11:11.0333333",
-        "IsActive": "true",
-        "CategoryId": "2",
-        "WarrantyDuration": "7"
-    },
-    {
+        "VariantImage": "gagaga.jpg",
+        "Quanity": "50",
+        "Price": "110",
+        "SalePrice": "80",
+        "AvailableQuanity": "50",
+        "CreateAt": "2024-06-14 18:11:11.0333333",
+        "Active": "true"
+      }
+    ]
+  },
+  {
+    "Id": "0",
+    "Name": "Hallmark All Occasion Boxed Set of Assorted Blank Greeting Cards ",
+    "Description": "Send a note of celebration, sympathy, or encouragement with one of the versatile assorted cards in this boxed set.",
+    "CreatedAt": "2024-06-14 18:11:11.0333333",
+    "IsActive": "true",
+    "CategoryId": "3",
+    "WarrantyDuration": "10",
+    "Variants": [
+      {
         "Id": "0",
-        "Name": "Hallmark All Occasion Boxed Set of Assorted Blank Greeting Cards ",
-        "Description": "Send a note of celebration, sympathy, or encouragement with one of the versatile assorted cards in this boxed set.",
-        "CreatedAt": "2024-06-14 18:11:11.0333333",
-        "IsActive": "true",
-        "CategoryId": "3",
-        "WarrantyDuration": "10"
-    },
-    {
+        "VariantImage": "gagaga.jpg",
+        "Quanity": "70",
+        "Price": "90",
+        "SalePrice": "90",
+        "AvailableQuanity": "70",
+        "CreateAt": "2024-06-14 18:11:11.0333333",
+        "Active": "true"
+      }
+    ]
+  },
+  {
+    "Id": "0",
+    "Name": "Hallmark Birthday Cards Assortment, 20 Cards",
+    "Description": "Cheerful birthday card set features 20 designs—including cupcakes, cats, party hats, balloons, rainbows and more—embellished with die cut details, embossing, glitter, and metallic foil.",
+    "CreatedAt": "2024-06-14 18:11:11.0333333",
+    "IsActive": "true",
+    "CategoryId": "3",
+    "WarrantyDuration": "12",
+    "Variants": [
+      {
         "Id": "0",
-        "Name": "Hallmark Birthday Cards Assortment, 20 Cards",
-        "Description": "Cheerful birthday card set features 20 designs—including cupcakes, cats, party hats, balloons, rainbows and more—embellished with die cut details, embossing, glitter, and metallic foil.",
-        "CreatedAt": "2024-06-14 18:11:11.0333333",
-        "IsActive": "true",
-        "CategoryId": "3",
-        "WarrantyDuration": "12"
-    },
-    {
+        "VariantImage": "gagaga.jpg",
+        "Quanity": "120",
+        "Price": "200",
+        "SalePrice": "180",
+        "AvailableQuanity": "80",
+        "CreateAt": "2024-06-14 18:11:11.0333333",
+        "Active": "true"
+      }
+    ]
+  },
+  {
+    "Id": "0",
+    "Name": "Glitter Girls - Bluebell 14-inch Poseable",
+    "Description": "Pretty blue eyes with long eyelashes. Easy-to-Play: Bluebell can sit, stand, bend her knees and elbows, and rotate her arms, legs, and head!",
+    "CreatedAt": "2024-06-14 18:11:11.0333333",
+    "IsActive": "true",
+    "CategoryId": "4",
+    "WarrantyDuration": "20",
+    "Variants": [
+      {
         "Id": "0",
-        "Name": "Glitter Girls - Bluebell 14-inch Poseable",
-        "Description": "Pretty blue eyes with long eyelashes. Easy-to-Play: Bluebell can sit, stand, bend her knees and elbows, and rotate her arms, legs, and head!",
-        "CreatedAt": "2024-06-14 18:11:11.0333333",
-        "IsActive": "true",
-        "CategoryId": "4",
-        "WarrantyDuration": "20"
-    },
-    {
+        "VariantImage": "gagaga.jpg",
+        "Quanity": "70",
+        "Price": "100",
+        "SalePrice": "70",
+        "AvailableQuanity": "60",
+        "CreateAt": "2024-06-14 18:11:11.0333333",
+        "Active": "true"
+      }
+    ]
+  },
+  {
+    "Id": "0",
+    "Name": "Realistic Soft Body Baby Dolls Berenguer Boutique",
+    "Description": "Two adorably cute huggable baby dolls with the sweetest little eyes (blue & brown) and facial expressions you’ve ever seen.",
+    "CreatedAt": "2024-06-14 18:11:11.0333333",
+    "IsActive": "true",
+    "CategoryId": "4",
+    "WarrantyDuration": "19",
+    "Variants": [
+      {
         "Id": "0",
-        "Name": "Realistic Soft Body Baby Dolls Berenguer Boutique",
-        "Description": "Two adorably cute huggable baby dolls with the sweetest little eyes (blue & brown) and facial expressions you’ve ever seen.",
-        "CreatedAt": "2024-06-14 18:11:11.0333333",
-        "IsActive": "true",
-        "CategoryId": "4",
-        "WarrantyDuration": "19"
-    }
+        "VariantImage": "gagaga.jpg",
+        "Quanity": "200",
+        "Price": "99",
+        "SalePrice": "80",
+        "AvailableQuanity": "190",
+        "CreateAt": "2024-06-14 18:11:11.0333333",
+        "Active": "true"
+      }
+    ]
+  }
 
 ]

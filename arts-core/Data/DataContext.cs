@@ -23,8 +23,7 @@ namespace arts_core.Data
         public DbSet<ProductEvent> ProductEvents { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Exchange> Exchanges { get; set; }
-        public DbSet<Refund> Refunds { get; set; }
-        public DbSet<Stock> Stocks {  get; set; }
+        public DbSet<Refund> Refunds { get; set; }        
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -38,9 +37,15 @@ namespace arts_core.Data
 
             modelBuilder.Entity<Payment>()
                 .HasOne(p => p.PaymentType)
-                .WithMany(rt => rt.Payments)
+                .WithMany(t => t.Payments)
                 .HasForeignKey(p => p.PaymentTypeId)
-                .OnDelete(DeleteBehavior.NoAction);           
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Payment>()
+               .HasOne(p => p.DeliveryType)
+               .WithMany()
+               .HasForeignKey(p => p.DeliveryTypeId)
+               .OnDelete(DeleteBehavior.NoAction);
 
 
             modelBuilder.Entity<Exchange>()
@@ -60,8 +65,7 @@ namespace arts_core.Data
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Stock>().HasOne(s => s.Variant).WithMany(v => v.Stocks).HasForeignKey(s => s.VariantId).OnDelete(DeleteBehavior.NoAction);
+            
 
             modelBuilder.Entity<ProductImage>().HasOne(i => i.Product).WithMany(p => p.ProductImages).HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.NoAction);
 
@@ -91,11 +95,7 @@ namespace arts_core.Data
             {
                 option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
             });
-
-            modelBuilder.Entity<Stock>(option =>
-            {
-                option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
-            });
+          
 
             modelBuilder.Entity<Variant>(option =>
             {

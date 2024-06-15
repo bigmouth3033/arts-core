@@ -50,8 +50,9 @@ namespace arts_core.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    ActiveDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    CategoryId = table.Column<int>(type: "int", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CategoryId = table.Column<int>(type: "int", nullable: false),
+                    WarrantyDuration = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -94,7 +95,9 @@ namespace arts_core.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ShipFee = table.Column<float>(type: "real", nullable: false),
                     PaymentTypeId = table.Column<int>(type: "int", nullable: false),
-                    DeliveryTypeId = table.Column<int>(type: "int", nullable: false)
+                    DeliveryTypeId = table.Column<int>(type: "int", nullable: false),
+                    PaymentStatusTypeId = table.Column<int>(type: "int", nullable: false),
+                    isReturn = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -102,6 +105,11 @@ namespace arts_core.Migrations
                     table.ForeignKey(
                         name: "FK_Payments_Types_DeliveryTypeId",
                         column: x => x.DeliveryTypeId,
+                        principalTable: "Types",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Payments_Types_PaymentStatusTypeId",
+                        column: x => x.PaymentStatusTypeId,
                         principalTable: "Types",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -174,6 +182,7 @@ namespace arts_core.Migrations
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     VariantImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Quanity = table.Column<int>(type: "int", nullable: false),
+                    AvailableQuanity = table.Column<int>(type: "int", nullable: false),
                     Price = table.Column<float>(type: "real", nullable: false),
                     SalePrice = table.Column<float>(type: "real", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
@@ -223,6 +232,7 @@ namespace arts_core.Migrations
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OrderStatus = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TotalPrice = table.Column<float>(type: "real", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
                     PaymentId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -324,24 +334,27 @@ namespace arts_core.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Stocks",
+                name: "TypeVariant",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    VariantId = table.Column<int>(type: "int", nullable: false),
-                    CostPerItem = table.Column<float>(type: "real", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                    TypesId = table.Column<int>(type: "int", nullable: false),
+                    VariantsId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Stocks", x => x.Id);
+                    table.PrimaryKey("PK_TypeVariant", x => new { x.TypesId, x.VariantsId });
                     table.ForeignKey(
-                        name: "FK_Stocks_Variants_VariantId",
-                        column: x => x.VariantId,
+                        name: "FK_TypeVariant_Types_TypesId",
+                        column: x => x.TypesId,
+                        principalTable: "Types",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TypeVariant_Variants_VariantsId",
+                        column: x => x.VariantsId,
                         principalTable: "Variants",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -381,6 +394,7 @@ namespace arts_core.Migrations
                     OriginalOrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     NewOrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     ReasonExchange = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ResponseExchange = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ExchangeDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
@@ -406,7 +420,9 @@ namespace arts_core.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    PaymentId = table.Column<int>(type: "int", nullable: false)
+                    PaymentId = table.Column<int>(type: "int", nullable: false),
+                    ReasonRefund = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ResponseRefund = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -444,7 +460,10 @@ namespace arts_core.Migrations
                 {
                     { 1, "Size", "VariantAttribute" },
                     { 2, "Color", "VariantAttribute" },
-                    { 3, "Material", "VariantAttribute" }
+                    { 3, "Material", "VariantAttribute" },
+                    { 4, "Admin", "UserRole" },
+                    { 5, "Employee", "UserRole" },
+                    { 6, "Customer", "UserRole" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -493,6 +512,11 @@ namespace arts_core.Migrations
                 column: "DeliveryTypeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Payments_PaymentStatusTypeId",
+                table: "Payments",
+                column: "PaymentStatusTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Payments_PaymentTypeId",
                 table: "Payments",
                 column: "PaymentTypeId");
@@ -538,9 +562,9 @@ namespace arts_core.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Stocks_VariantId",
-                table: "Stocks",
-                column: "VariantId");
+                name: "IX_TypeVariant_VariantsId",
+                table: "TypeVariant",
+                column: "VariantsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_RestrictedTypeId",
@@ -593,7 +617,7 @@ namespace arts_core.Migrations
                 name: "Reviews");
 
             migrationBuilder.DropTable(
-                name: "Stocks");
+                name: "TypeVariant");
 
             migrationBuilder.DropTable(
                 name: "VariantAttributes");
