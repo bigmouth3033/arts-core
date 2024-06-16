@@ -8,6 +8,7 @@ namespace arts_core.Interfaces
     {
         void SeedProductAndVariantData();
         void SeedUser();
+        void SeedVariantAttribute();
     }
 
     public class Seed : ISeed
@@ -63,6 +64,29 @@ namespace arts_core.Interfaces
                 if (users == null || users.Count == 0)
                     _logger.LogError("user is Null to Seed");
                 _context.Users.AddRange(users);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong in Seed");
+            }
+        }
+
+        public void SeedVariantAttribute()
+        {
+            try
+            {
+                var rootPath = _env.ContentRootPath;
+                var fullPath = Path.Combine(rootPath, "Data/variantAttribute.json");
+                var jsonData = System.IO.File.ReadAllText(fullPath);
+                _logger.LogInformation(jsonData);
+                if (string.IsNullOrWhiteSpace(jsonData))
+                    _logger.LogError("Is Null Or WhiteSpace in Seed User");
+
+                var variantAttribues = JsonConvert.DeserializeObject<List<VariantAttribute>>(jsonData);
+                if (variantAttribues == null || variantAttribues.Count == 0)
+                    _logger.LogError("user is Null to Seed");
+                _context.VariantAttributes.AddRange(variantAttribues);
                 _context.SaveChanges();
             }
             catch (Exception ex)
