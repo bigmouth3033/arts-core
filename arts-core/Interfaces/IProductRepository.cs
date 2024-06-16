@@ -14,6 +14,8 @@ namespace arts_core.Interfaces
 
         public Task<CustomResult> GetProduct(int id);
 
+        public Task<CustomResult> GetProductVariantInfo(int id);
+
     }
 
     public class ProductRepository : GenericRepository<Product>, IProductRepository
@@ -158,6 +160,21 @@ namespace arts_core.Interfaces
             {
                 return new CustomResult(400, "failed", ex.Message);
             }
+        }
+
+        public async Task<CustomResult> GetProductVariantInfo(int id)
+        {
+            var variants = await _context.Variants.Where(v => v.ProductId == id).Select(v => v.Id).ToListAsync();
+
+            var variantAttributes = await _context.VariantAttributes.Include(v => v.AttributeType).Where(v => variants.Contains(v.VariantId)).GroupBy(v => v.AttributeType).Select(v => new
+            {
+                Variant = v.Key.Name,
+                Values = v.ToList().GroupBy(n => n.AttributeValue).Select(n => n.Key)
+            }).ToListAsync();
+
+            return new CustomResult(200, "success", variantAttributes);
+
+            
         }
     }
 }

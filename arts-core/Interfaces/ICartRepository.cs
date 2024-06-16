@@ -34,7 +34,7 @@ namespace arts_core.Interfaces
                     return oldCart;
                 }
 
-                var cart = new Cart() { UserId = userId, VariantId = variantId };
+                var cart = new Cart() { UserId = userId, VariantId = variantId, Quanity = quanity };
                 Add(cart);
                 await _context.SaveChangesAsync();
                 return cart;
@@ -49,7 +49,10 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var carts = await _context.Carts.Where(c => c.UserId == userId).Include(c => c.Variant).ToListAsync();
+                var carts = await _context.Carts.Where(c => c.UserId == userId)
+                    .Include(c => c.Variant).ThenInclude(v => v.VariantAttributes)
+                    .Include(c => c.Variant).ThenInclude(v => v.Product).ThenInclude(p => p.ProductImages)
+                    .ToListAsync();
                 return carts;
             }
             catch (Exception ex)
@@ -73,5 +76,24 @@ namespace arts_core.Interfaces
             }
             return new Cart();
         }
+    }
+
+    public class VariantResponse
+    {
+
+    }
+
+    public class UserResponse
+    {
+
+    }
+    public class ProductResponse
+    {
+
+    }
+
+    public class ProductImageResponse
+    {
+
     }
 }

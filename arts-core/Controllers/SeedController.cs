@@ -42,5 +42,19 @@ namespace arts_core.Controllers
             }
             return Ok("");
         }
+
+        [HttpGet("seedVariantAttributes")]
+        public IActionResult SeedVariantAttributes()
+        {
+            try
+            {
+                _seeder.SeedVariantAttribute();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "something wrong in seedController");
+            }
+            return Ok("");
+        }
     }
 }

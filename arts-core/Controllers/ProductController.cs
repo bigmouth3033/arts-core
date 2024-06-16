@@ -46,6 +46,15 @@ namespace arts_core.Controllers
             return Ok(customResult);
         }
 
+        [HttpGet]
+        [Route("product-variant")]
+        public async Task<IActionResult> GetProductVariantDetail([FromQuery] int id)
+        {
+            var customResult = await _unitOfWork.ProductRepository.GetProductVariantInfo(id);
+
+            return Ok(customResult);
+        }
+
         
     }
 }

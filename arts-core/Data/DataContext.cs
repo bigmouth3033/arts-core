@@ -146,9 +146,9 @@ namespace arts_core.Data
 
             modelBuilder.Entity<User>(options =>
             {
-            options.HasData({
-
-            })
+                options.HasData([
+                    new User(){Id = 1, Email="admin@admin.com", RoleTypeId=4, Password="$2a$12$exQrFheHS3stHVydhi6.euQVkDzV0bplJ69dnLzAw6ls2Hmv.zP9O", Fullname="Admin"}
+                    ]);
             });
 
         }
