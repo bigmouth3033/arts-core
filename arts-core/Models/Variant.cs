@@ -15,5 +15,6 @@
         public virtual ICollection<VariantAttribute>? VariantAttributes { get; set; }
         
         public virtual ICollection<Type>? Types { get; set; }
+        public ICollection<User>? Users { get; set; }
     }
 }

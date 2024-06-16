@@ -97,7 +97,7 @@ namespace arts_core.Migrations
                     PaymentTypeId = table.Column<int>(type: "int", nullable: false),
                     DeliveryTypeId = table.Column<int>(type: "int", nullable: false),
                     PaymentStatusTypeId = table.Column<int>(type: "int", nullable: false),
-                    isReturn = table.Column<bool>(type: "bit", nullable: false)
+                    isCancel = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -222,37 +222,6 @@ namespace arts_core.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Orders",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    MyProperty = table.Column<int>(type: "int", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OrderStatus = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TotalPrice = table.Column<float>(type: "real", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    PaymentId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Orders", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Orders_Payments_PaymentId",
-                        column: x => x.PaymentId,
-                        principalTable: "Payments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Orders_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Reviews",
                 columns: table => new
                 {
@@ -299,6 +268,44 @@ namespace arts_core.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Carts_Variants_VariantId",
+                        column: x => x.VariantId,
+                        principalTable: "Variants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Orders",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    VariantId = table.Column<int>(type: "int", nullable: false),
+                    Quanity = table.Column<int>(type: "int", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrderStatus = table.Column<int>(type: "int", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TotalPrice = table.Column<float>(type: "real", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    PaymentId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Orders", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Orders_Payments_PaymentId",
+                        column: x => x.PaymentId,
+                        principalTable: "Payments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Orders_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Orders_Variants_VariantId",
                         column: x => x.VariantId,
                         principalTable: "Variants",
                         principalColumn: "Id",
@@ -422,7 +429,8 @@ namespace arts_core.Migrations
                     OrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     PaymentId = table.Column<int>(type: "int", nullable: false),
                     ReasonRefund = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ResponseRefund = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ResponseRefund = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -458,12 +466,23 @@ namespace arts_core.Migrations
                 columns: new[] { "Id", "Name", "NameType" },
                 values: new object[,]
                 {
-                    { 1, "Size", "VariantAttribute" },
-                    { 2, "Color", "VariantAttribute" },
+                    { 1, "Fast", "DeliveryType" },
+                    { 2, "Normal", "DeliveryType" },
                     { 3, "Material", "VariantAttribute" },
                     { 4, "Admin", "UserRole" },
                     { 5, "Employee", "UserRole" },
-                    { 6, "Customer", "UserRole" }
+                    { 6, "Customer", "UserRole" },
+                    { 7, "VPP", "PaymentType" },
+                    { 8, "Cheque", "PaymentType" },
+                    { 9, "Credit", "PaymentType" },
+                    { 10, "DD", "PaymentType" },
+                    { 11, "Size", "VariantAttribute" },
+                    { 12, "Color", "VariantAttribute" },
+                    { 13, "Pending", "OrdersStatusType" },
+                    { 14, "Accepted", "OrdersStatusType" },
+                    { 15, "Denied", "OrdersStatusType" },
+                    { 16, "Success", "OrdersStatusType" },
+                    { 17, "Delivery", "OrdersStatusType" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -505,6 +524,11 @@ namespace arts_core.Migrations
                 name: "IX_Orders_UserId",
                 table: "Orders",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_VariantId",
+                table: "Orders",
+                column: "VariantId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_DeliveryTypeId",
@@ -629,19 +653,19 @@ namespace arts_core.Migrations
                 name: "Orders");
 
             migrationBuilder.DropTable(
-                name: "Variants");
-
-            migrationBuilder.DropTable(
                 name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "Products");
+                name: "Variants");
 
             migrationBuilder.DropTable(
                 name: "Types");
+
+            migrationBuilder.DropTable(
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Categories");

@@ -12,7 +12,7 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240615160652_InitialCreate")]
+    [Migration("20240616052700_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -236,9 +236,6 @@ namespace arts_core.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("MyProperty")
-                        .HasColumnType("int");
-
                     b.Property<int>("OrderStatus")
                         .HasColumnType("int");
 
@@ -248,10 +245,16 @@ namespace arts_core.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Quanity")
+                        .HasColumnType("int");
+
                     b.Property<float?>("TotalPrice")
                         .HasColumnType("real");
 
                     b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VariantId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -259,6 +262,8 @@ namespace arts_core.Migrations
                     b.HasIndex("PaymentId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("VariantId");
 
                     b.ToTable("Orders");
                 });
@@ -283,7 +288,7 @@ namespace arts_core.Migrations
                     b.Property<float>("ShipFee")
                         .HasColumnType("real");
 
-                    b.Property<bool>("isReturn")
+                    b.Property<bool>("isCancel")
                         .HasColumnType("bit");
 
                     b.HasKey("Id");
@@ -402,6 +407,10 @@ namespace arts_core.Migrations
                     b.Property<string>("ResponseRefund")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
@@ -456,14 +465,14 @@ namespace arts_core.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Size",
-                            NameType = "VariantAttribute"
+                            Name = "Fast",
+                            NameType = "DeliveryType"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Color",
-                            NameType = "VariantAttribute"
+                            Name = "Normal",
+                            NameType = "DeliveryType"
                         },
                         new
                         {
@@ -488,6 +497,72 @@ namespace arts_core.Migrations
                             Id = 6,
                             Name = "Customer",
                             NameType = "UserRole"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "VPP",
+                            NameType = "PaymentType"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Cheque",
+                            NameType = "PaymentType"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Credit",
+                            NameType = "PaymentType"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "DD",
+                            NameType = "PaymentType"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Size",
+                            NameType = "VariantAttribute"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Color",
+                            NameType = "VariantAttribute"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "Pending",
+                            NameType = "OrdersStatusType"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Accepted",
+                            NameType = "OrdersStatusType"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Denied",
+                            NameType = "OrdersStatusType"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "Success",
+                            NameType = "OrdersStatusType"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Name = "Delivery",
+                            NameType = "OrdersStatusType"
                         });
                 });
 
@@ -700,9 +775,17 @@ namespace arts_core.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("arts_core.Models.Variant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Payment");
 
                     b.Navigation("User");
+
+                    b.Navigation("Variant");
                 });
 
             modelBuilder.Entity("arts_core.Models.Payment", b =>

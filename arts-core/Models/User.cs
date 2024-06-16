@@ -19,6 +19,7 @@
         public Type? RestrictedType { get; set; }
         public ICollection<Order>? Orders { get; set; }
         public ICollection<Message>? Messages { get; set; }
+        public ICollection<Variant>? Variants { get; set; }
 
     }
 }

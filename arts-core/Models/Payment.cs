@@ -10,7 +10,7 @@
         public Type? DeliveryType { get; set; }
         public int PaymentStatusTypeId { get; set; }
         public Type? PaymentStatusType { get; set; }
-        public bool isReturn { get; set; }
+        public bool isCancel { get; set; }
         public ICollection<Order>? Orders { get; set; }
         public ICollection<Refund>? Refunds { get; set; }
     }

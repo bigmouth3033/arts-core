@@ -9,5 +9,6 @@
         public Payment? Payment { get; set; }
         public string? ReasonRefund { get; set; }
         public string? ResponseRefund { get; set; }
+        public string Status { get; set; } = "Pending";
     }
 }

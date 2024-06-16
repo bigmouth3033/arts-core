@@ -65,6 +65,12 @@ namespace arts_core.Data
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Variant>()
+                .HasMany(v => v.Users)
+                .WithMany(u => u.Variants)
+                .UsingEntity<Cart>();
+                
             
 
             modelBuilder.Entity<ProductImage>().HasOne(i => i.Product).WithMany(p => p.ProductImages).HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.NoAction);
@@ -105,12 +111,23 @@ namespace arts_core.Data
             modelBuilder.Entity<Models.Type>(option =>
             {
                 option.HasData([
-                    new Models.Type(){Id = 1,Name = "Size", NameType = "VariantAttribute"},
-                    new Models.Type(){Id = 2, Name = "Color", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 1, Name = "Fast", NameType = "DeliveryType"},
+                    new Models.Type(){Id = 2, Name = "Normal", NameType = "DeliveryType"},                    
                     new Models.Type(){Id = 3, Name = "Material", NameType = "VariantAttribute"},
                     new Models.Type(){Id = 4, Name = "Admin", NameType = "UserRole"},
                     new Models.Type(){Id = 5, Name = "Employee", NameType = "UserRole"},
                     new Models.Type(){Id = 6, Name = "Customer", NameType = "UserRole"},
+                    new Models.Type(){Id = 7, Name = "VPP", NameType = "PaymentType"},
+                    new Models.Type(){Id = 8, Name = "Cheque", NameType = "PaymentType"},
+                    new Models.Type(){Id = 9, Name = "Credit", NameType = "PaymentType"},
+                    new Models.Type(){Id = 10, Name = "DD", NameType = "PaymentType"},
+                    new Models.Type(){Id = 11,Name = "Size", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 12, Name = "Color", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 13, Name = "Pending", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 14, Name = "Accepted", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 15, Name = "Denied", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 16, Name = "Success", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 17, Name = "Delivery", NameType = "OrdersStatusType"},
                     ]);
             });
 
