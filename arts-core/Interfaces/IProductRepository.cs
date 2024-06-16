@@ -98,17 +98,6 @@ namespace arts_core.Interfaces
                     Quanity = variant.Inventory,
                 };
 
-                if(variant.Inventory != 0)
-                {
-                    var stock = new Stock
-                    {
-                        CostPerItem = variant.BeginFund,
-                        Quantity = variant.Inventory,
-                        Variant = newVariant
-                    };
-
-                    _context.Stocks.Add(stock);
-                }
 
                 newVariant.Product = newProduct;
                 _context.Variants.Add(newVariant);

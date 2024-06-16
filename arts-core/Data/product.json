@@ -11,9 +11,10 @@
             {
                 "Id": "0",
                 "VariantImage": "gagaga.jpg",
-                "Quanity": "10",
+                "Quanity": "50",
                 "Price": "100",
-                "SalePrice": "120",
+                "SalePrice": "70",
+                "AvailableQuanity": "50",
                 "CreateAt": "2024-06-14 18:11:11.0333333",
                 "Active": "true"
             }
@@ -26,7 +27,19 @@
         "CreatedAt": "2024-06-14 18:11:11.0333333",
         "IsActive": "true",
         "CategoryId": "2",
-        "WarrantyDuration": "8"
+        "WarrantyDuration": "8",
+        "Variants": [
+            {
+                "Id": "0",
+                "VariantImage": "gagaga.jpg",
+                "Quanity": "30",
+                "Price": "70",
+                "SalePrice": "30",
+                "AvailableQuanity": "30",
+                "CreateAt": "2024-06-14 18:11:11.0333333",
+                "Active": "true"
+            }
+        ]
     },
     {
         "Id": "0",
@@ -35,7 +48,19 @@
         "CreatedAt": "2024-06-14 18:11:11.0333333",
         "IsActive": "true",
         "CategoryId": "2",
-        "WarrantyDuration": "7"
+        "WarrantyDuration": "7",
+        "Variants": [
+            {
+                "Id": "0",
+                "VariantImage": "gagaga.jpg",
+                "Quanity": "50",
+                "Price": "110",
+                "SalePrice": "80",
+                "AvailableQuanity": "50",
+                "CreateAt": "2024-06-14 18:11:11.0333333",
+                "Active": "true"
+            }
+        ]
     },
     {
         "Id": "0",
@@ -44,7 +69,19 @@
         "CreatedAt": "2024-06-14 18:11:11.0333333",
         "IsActive": "true",
         "CategoryId": "3",
-        "WarrantyDuration": "10"
+        "WarrantyDuration": "10",
+        "Variants": [
+            {
+                "Id": "0",
+                "VariantImage": "gagaga.jpg",
+                "Quanity": "70",
+                "Price": "90",
+                "SalePrice": "90",
+                "AvailableQuanity": "70",
+                "CreateAt": "2024-06-14 18:11:11.0333333",
+                "Active": "true"
+            }
+        ]
     },
     {
         "Id": "0",
@@ -53,7 +90,19 @@
         "CreatedAt": "2024-06-14 18:11:11.0333333",
         "IsActive": "true",
         "CategoryId": "3",
-        "WarrantyDuration": "12"
+        "WarrantyDuration": "12",
+        "Variants": [
+            {
+                "Id": "0",
+                "VariantImage": "gagaga.jpg",
+                "Quanity": "120",
+                "Price": "200",
+                "SalePrice": "180",
+                "AvailableQuanity": "80",
+                "CreateAt": "2024-06-14 18:11:11.0333333",
+                "Active": "true"
+            }
+        ]
     },
     {
         "Id": "0",
@@ -62,7 +111,19 @@
         "CreatedAt": "2024-06-14 18:11:11.0333333",
         "IsActive": "true",
         "CategoryId": "4",
-        "WarrantyDuration": "20"
+        "WarrantyDuration": "20",
+        "Variants": [
+            {
+                "Id": "0",
+                "VariantImage": "gagaga.jpg",
+                "Quanity": "70",
+                "Price": "100",
+                "SalePrice": "70",
+                "AvailableQuanity": "60",
+                "CreateAt": "2024-06-14 18:11:11.0333333",
+                "Active": "true"
+            }
+        ]
     },
     {
         "Id": "0",
@@ -71,7 +132,19 @@
         "CreatedAt": "2024-06-14 18:11:11.0333333",
         "IsActive": "true",
         "CategoryId": "4",
-        "WarrantyDuration": "19"
+        "WarrantyDuration": "19",
+        "Variants": [
+            {
+                "Id": "0",
+                "VariantImage": "gagaga.jpg",
+                "Quanity": "200",
+                "Price": "99",
+                "SalePrice": "80",
+                "AvailableQuanity": "190",
+                "CreateAt": "2024-06-14 18:11:11.0333333",
+                "Active": "true"
+            }
+        ]
     }
 
 ]

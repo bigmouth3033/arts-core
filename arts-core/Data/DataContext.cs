@@ -8,7 +8,7 @@ namespace arts_core.Data
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
         }
-        public DbSet<Cart> Carts    { get; set; }
+        public DbSet<Cart> Carts { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Product> Products { get; set; }
@@ -24,7 +24,6 @@ namespace arts_core.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<Exchange> Exchanges { get; set; }
         public DbSet<Refund> Refunds { get; set; }
-        public DbSet<Stock> Stocks {  get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -38,9 +37,15 @@ namespace arts_core.Data
 
             modelBuilder.Entity<Payment>()
                 .HasOne(p => p.PaymentType)
-                .WithMany(rt => rt.Payments)
+                .WithMany(t => t.Payments)
                 .HasForeignKey(p => p.PaymentTypeId)
-                .OnDelete(DeleteBehavior.NoAction);           
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Payment>()
+               .HasOne(p => p.DeliveryType)
+               .WithMany()
+               .HasForeignKey(p => p.DeliveryTypeId)
+               .OnDelete(DeleteBehavior.NoAction);
 
 
             modelBuilder.Entity<Exchange>()
@@ -61,7 +66,12 @@ namespace arts_core.Data
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<Stock>().HasOne(s => s.Variant).WithMany(v => v.Stocks).HasForeignKey(s => s.VariantId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Variant>()
+                .HasMany(v => v.Users)
+                .WithMany(u => u.Variants)
+                .UsingEntity<Cart>();
+
+
 
             modelBuilder.Entity<ProductImage>().HasOne(i => i.Product).WithMany(p => p.ProductImages).HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.NoAction);
 
@@ -73,7 +83,7 @@ namespace arts_core.Data
 
             modelBuilder.Entity<Exchange>(option =>
             {
-                option.Property(e => e.ExchangeDate).HasDefaultValueSql("GETDATE()");        
+                option.Property(e => e.ExchangeDate).HasDefaultValueSql("GETDATE()");
             });
 
 
@@ -92,10 +102,6 @@ namespace arts_core.Data
                 option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
             });
 
-            modelBuilder.Entity<Stock>(option =>
-            {
-                option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
-            });
 
             modelBuilder.Entity<Variant>(option =>
             {
@@ -105,12 +111,23 @@ namespace arts_core.Data
             modelBuilder.Entity<Models.Type>(option =>
             {
                 option.HasData([
-                    new Models.Type(){Id = 1,Name = "Size", NameType = "VariantAttribute"},
-                    new Models.Type(){Id = 2, Name = "Color", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 1, Name = "Fast", NameType = "DeliveryType"},
+                    new Models.Type(){Id = 2, Name = "Normal", NameType = "DeliveryType"},
                     new Models.Type(){Id = 3, Name = "Material", NameType = "VariantAttribute"},
                     new Models.Type(){Id = 4, Name = "Admin", NameType = "UserRole"},
                     new Models.Type(){Id = 5, Name = "Employee", NameType = "UserRole"},
                     new Models.Type(){Id = 6, Name = "Customer", NameType = "UserRole"},
+                    new Models.Type(){Id = 7, Name = "VPP", NameType = "PaymentType"},
+                    new Models.Type(){Id = 8, Name = "Cheque", NameType = "PaymentType"},
+                    new Models.Type(){Id = 9, Name = "Credit", NameType = "PaymentType"},
+                    new Models.Type(){Id = 10, Name = "DD", NameType = "PaymentType"},
+                    new Models.Type(){Id = 11,Name = "Size", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 12, Name = "Color", NameType = "VariantAttribute"},
+                    new Models.Type(){Id = 13, Name = "Pending", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 14, Name = "Accepted", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 15, Name = "Denied", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 16, Name = "Success", NameType = "OrdersStatusType"},
+                    new Models.Type(){Id = 17, Name = "Delivery", NameType = "OrdersStatusType"},
                     ]);
             });
 
@@ -127,8 +144,12 @@ namespace arts_core.Data
                     ]);
             });
 
+            modelBuilder.Entity<User>(options =>
+            {
+            options.HasData({
 
-
+            })
+            });
 
         }
 
