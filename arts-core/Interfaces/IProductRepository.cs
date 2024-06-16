@@ -12,6 +12,8 @@ namespace arts_core.Interfaces
 
         public Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize);
 
+        public Task<CustomResult> GetProduct(int id);
+
     }
 
     public class ProductRepository : GenericRepository<Product>, IProductRepository
@@ -149,6 +151,24 @@ namespace arts_core.Interfaces
             };
 
             return customPaging;
+        }
+
+        public async Task<CustomResult> GetProduct(int id)
+        {
+            try
+            {
+                var product = await _context.Products.Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).ThenInclude(p => p.AttributeType).SingleOrDefaultAsync(p => p.Id == id && p.IsActive == true);
+
+                if(product == null)
+                {
+                    return new CustomResult(404, "failed", null);
+                }
+
+                return new CustomResult(200, "success", product);
+            }catch (Exception ex)
+            {
+                return new CustomResult(400, "failed", ex.Message);
+            }
         }
     }
 }

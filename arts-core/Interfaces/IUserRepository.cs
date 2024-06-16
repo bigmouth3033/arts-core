@@ -35,7 +35,14 @@ namespace arts_core.Interfaces
         Task<CustomResult> CreateEmployee(CreateEmployee account);
 
         Task<CustomPaging> GetAllEmployees(int pageNumber, int pageSize);
-    
+
+        Task<CustomResult> CreateCustomer(CreateCustomer account);
+
+        Task<CustomResult> CustomerLogin(LoginRequest account);
+
+        Task<User> CustomerAuthenticate(LoginRequest account);
+
+        Task<CustomResult> GetUser(string email);
     }
     
     public class UserRepository : GenericRepository<User>, IUserRepository
@@ -270,9 +277,94 @@ namespace arts_core.Interfaces
             };
 
             return customPaging;
+        }
 
+        public async Task<CustomResult> CreateCustomer(CreateCustomer account)
+        {
+            try
+            {
+                var verifiedEmail = await CheckEmailExist(account.Email);
 
+                if (verifiedEmail == true)
+                {
+                    return new CustomResult(400, "Email already exist", null);
+                }
 
+                var verifiedPhone = await CheckPhoneExist(account.PhoneNumber);
+
+                if (verifiedPhone == true)
+                {
+                    return new CustomResult(400, "Phone number already exist", null);
+                }
+
+                var customerRole = await _context.Types.SingleOrDefaultAsync(r => r.NameType == "UserRole" && r.Name == "Customer");
+
+                var customer = new User()
+                {
+                    Email = account.Email,
+                    Password = BCrypt.Net.BCrypt.HashPassword(account.Password),
+                    Active = true,
+                    PhoneNumber = account.PhoneNumber,
+                    Fullname = account.Name,
+                    RoleType = customerRole,
+                };
+
+                _context.Users.Add(customer);
+                return new CustomResult(200, "success", customer);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> CustomerLogin(LoginRequest account)
+        {
+            var user = await CustomerAuthenticate(account);
+
+            if (user == null)
+            {
+                return new CustomResult(404, "Not Found", null);
+            }
+
+            var token = CreateToken(user);
+
+            return new CustomResult(200, "token", token);
+        }
+
+        public async Task<User> CustomerAuthenticate(LoginRequest account)
+        {
+            try
+            {
+                var verified = await _context.Users.Include(u => u.RoleType).Where(u => u.Email == account.Email && (u.RoleType.Name == "Customer")).SingleOrDefaultAsync();
+
+                if (verified != null)
+                {
+                    if (BCrypt.Net.BCrypt.Verify(account.Password, verified.Password))
+                    {
+                        return verified;
+                    }
+                }
+
+                return null;
+
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        public async Task<CustomResult> GetUser(string email)
+        {
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+            {
+                return new CustomResult(400, "Bad Request", null);
+            }
+
+            return new CustomResult(200, "Success", user);
         }
     }
 

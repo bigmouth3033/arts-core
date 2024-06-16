@@ -19,7 +19,7 @@ namespace arts_core.Controllers
 
         [HttpPost]
         [Route("new")]
-        public IActionResult CreateProduct([FromForm]CreateProduct product)
+        public IActionResult CreateProduct([FromForm] CreateProduct product)
         {
             var customResult = _unitOfWork.ProductRepository.CreateProduct(product);
 
@@ -29,7 +29,7 @@ namespace arts_core.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles ="Admin")]
+        [Authorize(Roles = "Admin, Employee")]
         [Route("admin-products")]
         public async Task<IActionResult> GetProducts([FromQuery] int pageNumber, [FromQuery] int pageSize)
         {
@@ -37,5 +37,15 @@ namespace arts_core.Controllers
 
             return Ok(customPaging);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProduct([FromQuery]int id)
+        {
+            var customResult = await _unitOfWork.ProductRepository.GetProduct(id);
+
+            return Ok(customResult);
+        }
+
+        
     }
 }

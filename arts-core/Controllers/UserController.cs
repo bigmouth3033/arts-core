@@ -43,6 +43,17 @@ namespace arts_core.Controllers
             return Ok(customResult);
         }
 
+        [HttpPost]
+        [Route("create-customer")]
+        public async Task<IActionResult> CreateCustomer([FromForm]CreateCustomer account)
+        {
+            var customResult = await _unitOfWork.UserRepository.CreateCustomer(account);
+
+            _unitOfWork.SaveChanges();
+
+            return Ok(customResult);
+        }
+
         [HttpGet]
         [Route("get-employee")]
         [Authorize(Roles = "Admin")]

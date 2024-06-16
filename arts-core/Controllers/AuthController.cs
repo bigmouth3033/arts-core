@@ -26,6 +26,27 @@ namespace arts_core.Controllers
             return Ok(customResult);
         }
 
+        [HttpPost]
+        [Route("customer-login")]
+        public async Task<IActionResult> Customer([FromForm] LoginRequest account)
+        {
+            var customResult = await _unitOfWork.UserRepository.CustomerLogin(account);
+
+            return Ok(customResult);
+        }
+
+        [HttpGet]
+        [Route("customer")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetCustomer()
+        {
+            var email = User.FindFirst(ClaimTypes.Email).Value;
+
+            var customResult = await _unitOfWork.UserRepository.GetUser(email);
+
+            return Ok(customResult);
+        }
+
         [HttpGet]
         [Route("admin")]
         [Authorize(Roles ="Admin,Employee")]
