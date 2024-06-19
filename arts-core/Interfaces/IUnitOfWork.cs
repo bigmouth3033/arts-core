@@ -24,7 +24,6 @@ namespace arts_core.Interfaces
         public IProductRepository ProductRepository { get; set; }
         public ICartRepository CartRepository { get; set; }
 
-
         public UnitOfWork(DataContext dataContext, IUserRepository userRepository, ICategoryRepository categoryRepository, ITypeRepository typeRepository, IProductRepository productRepository, ICartRepository cartRepository)
         {
             _dataContext = dataContext;
@@ -33,7 +32,7 @@ namespace arts_core.Interfaces
             TypeRepository = typeRepository;
             ProductRepository = productRepository;
             CartRepository = cartRepository;
-        }        
+        }
 
         public void Dispose()
         {

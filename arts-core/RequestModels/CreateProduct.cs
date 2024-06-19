@@ -20,6 +20,8 @@ namespace arts_core.RequestModels
 
         public int Warranty { get; set; }
 
+        public int Amount {  get; set; }
+
         public ICollection<IFormFile>? Images { get; set; }
 
         public ICollection<object>? Variants {  get; set; } = new List<object>();

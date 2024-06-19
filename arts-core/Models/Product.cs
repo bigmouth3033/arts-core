@@ -9,6 +9,9 @@
         public bool IsActive {  get; set; }
         public int CategoryId { get; set; }
         public int WarrantyDuration { get; set; }
+
+        public string? Unit {  get; set; }
+
         public virtual Category? Category { get; set; }
         public ICollection<Variant>? Variants { get; set; }
         public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();

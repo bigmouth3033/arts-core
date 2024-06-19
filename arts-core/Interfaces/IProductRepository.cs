@@ -3,6 +3,10 @@ using arts_core.Models;
 using arts_core.RequestModels;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Buffers;
+using static System.Net.Mime.MediaTypeNames;
+using Microsoft.AspNetCore.Mvc;
 
 namespace arts_core.Interfaces
 {
@@ -10,11 +14,20 @@ namespace arts_core.Interfaces
     {
         public CustomResult CreateProduct(CreateProduct product);
 
-        public Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize);
+        public Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize, IEnumerable<int> categoryId, string searchValue);
 
         public Task<CustomResult> GetProduct(int id);
 
+        public Task<CustomResult> GetProductAdmin(int id);
+
         public Task<CustomResult> GetProductVariantInfo(int id);
+
+        public Task<CustomResult> CreateImages(RequestImages images);
+
+        public Task<CustomResult> DeleteImage(int imageId);
+
+        //Paginagion for product listing-page
+        public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue);
 
     }
 
@@ -52,7 +65,8 @@ namespace arts_core.Interfaces
                 Name = product.ProductName,
                 Description = product.Description,
                 IsActive = product.Active,
-                WarrantyDuration = product.Warranty
+                WarrantyDuration = product.Warranty,
+                Unit = product.Unit
             };
 
             ICollection<string> imageNameList = new List<string>();
@@ -83,7 +97,8 @@ namespace arts_core.Interfaces
                     Active = true,
                     Price = product.Price,
                     SalePrice = product.SalePrice,
-                    Quanity = 0
+                    Quanity = product.Amount,
+                    AvailableQuanity = product.Amount
                 };
 
                 newVariant.Product = newProduct;
@@ -98,6 +113,7 @@ namespace arts_core.Interfaces
                     Price = variant.SellPrice,
                     SalePrice = variant.ComparePrice,
                     Quanity = variant.Inventory,
+                    AvailableQuanity = variant.Inventory,
                 };
 
 
@@ -111,7 +127,7 @@ namespace arts_core.Interfaces
                     var newVariantAttriBute = new VariantAttribute()
                     {
                         AttributeTypeId = option.Id,
-                        AttributeValue = variant.Variant[i],
+                        AttributeValue = variant.Variant[i].Trim(),
                         Priority = i + 1
                     };
                     newVariantAttriBute.Variant = newVariant;
@@ -124,35 +140,81 @@ namespace arts_core.Interfaces
             return new CustomResult(200, "success", newProduct);
         }
 
-        public async Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize)
+        public async Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize, IEnumerable<int> categoryId, string searchValue)
         {
-            var list = await _context.Products.Include(p => p.Category).Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(); 
+            //var list = await _context.Products.Include(p => p.Category).Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(); 
 
-            var total = _context.Products.Count();
+            //var total = _context.Products.Count();
+
+            //var customPaging = new CustomPaging()
+            //{
+            //    Status = 200,
+            //    Message = "OK",
+            //    CurrentPage = pageNumber,
+            //    TotalPages = (total / pageSize),
+            //    PageSize = pageSize,
+            //    TotalCount = total,
+            //    Data = list
+            //};
+
+            //return customPaging;
+
+            IQueryable<Product> query;
+
+            query = _context.Products;
+
+            if(categoryId.Count() != 0)
+            {
+                query = query.Where(p => categoryId.Contains(p.CategoryId));
+            }
+
+            query = query.Where(p => p.Name.Contains(searchValue));
+
+            query = query.OrderByDescending(p => p.CreatedAt);
+
+     
+            query = query.Include(p => p.Category)
+                         .Include(p => p.ProductImages)
+                         .Include(p => p.Variants)
+                            .ThenInclude(v => v.VariantAttributes);
+
+            var total = query.Count();
+
+
+            // Step 3: Apply Pagination
+            query = query.Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize);
+
+            // Materialize the query results before using them
+            var list = await query.ToListAsync();
+
+         
 
             var customPaging = new CustomPaging()
             {
                 Status = 200,
                 Message = "OK",
                 CurrentPage = pageNumber,
-                TotalPages = (total / pageSize),
+                TotalPages = (int)Math.Ceiling((double)total / pageSize),
                 PageSize = pageSize,
                 TotalCount = total,
                 Data = list
             };
 
             return customPaging;
+
+
         }
 
         public async Task<CustomResult> GetProduct(int id)
         {
             try
             {
-                var product = await _context.Products.Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).ThenInclude(p => p.AttributeType).SingleOrDefaultAsync(p => p.Id == id && p.IsActive == true);
+                var product = await _context.Products.Include(p => p.ProductImages).Include(p => p.Category).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).ThenInclude(p => p.AttributeType).SingleOrDefaultAsync(p => p.Id == id && p.IsActive == true);
 
                 if(product == null)
                 {
-                    return new CustomResult(404, "failed", null);
+                    return new CustomResult(404, "failed", null); 
                 }
 
                 return new CustomResult(200, "success", product);
@@ -166,15 +228,163 @@ namespace arts_core.Interfaces
         {
             var variants = await _context.Variants.Where(v => v.ProductId == id).Select(v => v.Id).ToListAsync();
 
-            var variantAttributes = await _context.VariantAttributes.Include(v => v.AttributeType).Where(v => variants.Contains(v.VariantId)).GroupBy(v => v.AttributeType).Select(v => new
+            var variantAttributes = await _context.VariantAttributes.Include(v => v.AttributeType).Where(v => variants.Contains(v.VariantId)).GroupBy(va => new { va.Priority, va.AttributeType.Name })
+            .Select(g => new
             {
-                Variant = v.Key.Name,
-                Values = v.ToList().GroupBy(n => n.AttributeValue).Select(n => n.Key)
-            }).ToListAsync();
+                Priority = g.Key.Priority,
+                Variant = g.Key.Name,
+                Values =  RemoveDuplicates(g.Select(va => va.AttributeValue).ToList())
+            })
+            .ToListAsync();
 
             return new CustomResult(200, "success", variantAttributes);
+        }
 
-            
+        static List<string> RemoveDuplicates(List<string> array)
+        {
+            var seen = new HashSet<string>();
+            var result = new List<string>();
+
+            foreach (var item in array)
+            {
+                if (seen.Add(item))
+                {
+                    result.Add(item);
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<CustomResult> CreateImages(RequestImages images)
+        {
+            try
+            {
+                var listImages = new List<string>();
+
+                var product = await _context.Products.SingleOrDefaultAsync(p => p.Id == images.ProductId);
+
+                foreach (var item in images.Images)
+                {
+                    var fileName = DateTime.Now.Ticks + item.FileName;
+                    listImages.Add(fileName);
+                    var uploadPath = Path.Combine(_env.WebRootPath, "images");
+                    var filePath = Path.Combine(uploadPath, fileName);
+
+                    using var stream = new FileStream(filePath, FileMode.Create);
+                    item.CopyTo(stream);
+
+                    var newImage = new ProductImage
+                    {
+                        ImageName = fileName,
+                        Product = product
+                    };
+
+                    _context.ProductImages.Add(newImage);
+                }
+
+                return new CustomResult(200, "success", listImages);
+            }
+            catch(Exception ex)
+            {
+                return new CustomResult(400, "Bad Request", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> DeleteImage(int imageId)
+        {
+            try
+            {
+                var image = await _context.ProductImages.SingleOrDefaultAsync(img => img.Id == imageId);
+
+                _context.ProductImages.Remove(image);
+
+                return new CustomResult(200, "success", null);
+            }
+            catch(Exception ex)
+            {
+                return new CustomResult(400, "Bad Request", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> GetProductAdmin(int id)
+        {
+            try
+            {
+                var product = await _context.Products.Include(p => p.ProductImages).Include(p => p.Category).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).ThenInclude(p => p.AttributeType).SingleOrDefaultAsync(p => p.Id == id);
+
+                if (product == null)
+                {
+                    return new CustomResult(404, "failed", null);
+                }
+
+                return new CustomResult(200, "success", product);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue)
+        {
+            IQueryable<Product> query;
+
+            if (categoryId == 0)
+            {
+                query = _context.Products;
+            }
+            else
+            {
+                query = _context.Products
+                                .Where(p => p.CategoryId == categoryId);
+            }
+            query = query.Where(p => p.Name.Contains(searchValue));
+
+            if (sort == 1)
+            {
+                query = query.OrderByDescending(p => p.CreatedAt);
+            }
+
+            // Step 2: Include Related Entities
+            query = query.Include(p => p.ProductImages)
+                         .Include(p => p.Variants);
+
+            //sort Low to High price(Min Price (base on Variant) of A Product)
+            if (sort == 2)
+            {
+                query = query.OrderBy(p => p.Variants.Min(v => v.Price));
+            }
+
+            //sort High to Low price
+            if (sort == 3)
+            {
+                query = query.OrderByDescending(p => p.Variants.Min(v => v.Price));
+            }
+
+            // Step 3: Apply Pagination
+            var total = query.Count();
+            query = query.Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize);
+
+            // Materialize the query results before using them
+            var list = await query.ToListAsync();
+
+
+
+            var customPaging = new CustomPaging()
+            {
+                Status = 200,
+                Message = "OK",
+                CurrentPage = pageNumber,
+                TotalPages = (int)Math.Ceiling((double)total / pageSize),
+                PageSize = pageSize,
+                TotalCount = total,
+                Data = list
+            };
+
+            return customPaging;
+
         }
     }
 }
