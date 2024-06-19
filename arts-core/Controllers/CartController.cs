@@ -53,7 +53,11 @@ namespace arts_core.Controllers
         {
             try
             {
-                await _unitOfWork.CartRepository.CreateCartAsync(userId, variantId, quanity);
+               var result =  await _unitOfWork.CartRepository.CreateCartAsync(userId, variantId, quanity);
+                if(result.isOkay)
+                    return Ok(new CustomResult(201, $"{result.Message}", result));
+                else
+                    return Ok(new CustomResult(405, $"Create cartId fail", result));
             }
             catch (Exception ex)
             {
@@ -77,6 +81,20 @@ namespace arts_core.Controllers
                 _logger.LogError(ex, "Cannot update cartId {cartId}", cartId);
             }
             return Ok("");
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteCart([FromQuery]int cartId)
+        {
+            try
+            {
+                var result =await _unitOfWork.CartRepository.DeleteCartById(cartId);
+                return Ok(new CustomResult(200,$"{result.Message}",result)); 
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
     }
 
