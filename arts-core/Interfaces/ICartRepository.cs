@@ -6,9 +6,11 @@ namespace arts_core.Interfaces
 {
     public interface ICartRepository : IRepository<Cart>
     {
-        Task<Cart> CreateCartAsync(int userId, int variantId, int quanity);
+        Task<UpdateCartModel> CreateCartAsync(int userId, int variantId, int quanity);
         Task<Cart> FindCartByUserAndVariantAsync(int userId, int variantId);
         Task<List<Cart>> GetCartsByUserIdAsync(int userId);
+        Task<UpdateCartModel> UpdateCartById(int cartId, int quanity);
+        Task<UpdateCartModel> DeleteCartById(int cartId);
     }
 
 
@@ -20,31 +22,44 @@ namespace arts_core.Interfaces
             _logger = logger;
         }
 
-        public async Task<Cart> CreateCartAsync(int userId, int variantId, int quanity)
+        public async Task<UpdateCartModel> CreateCartAsync(int userId, int variantId, int quanity)
         {
-            try
+            string Name;
+            float Price;
+            int Quanity;
+            float Total;
+            //kiem tra xem card da tung tao chua va update
+            var olcCart = _context.Carts.Where(c => c.UserId == userId && c.VariantId == variantId).FirstOrDefault();
+            var variant = await _context.Variants.Include(v => v.Product).FirstOrDefaultAsync(v => v.Id == variantId);
+            if (olcCart != null)
             {
-                //find cart if created before
-                var oldCart = await FindCartByUserAndVariantAsync(userId, variantId);
-                if (oldCart.UserId == userId && oldCart.VariantId == variantId)
+                olcCart.Quanity += quanity;
+                if (!CompareQuanityAndAvailableQuanity(olcCart.Quanity, variant.AvailableQuanity))
                 {
-                    oldCart.Quanity += quanity;
-                    Update(oldCart);
-                    await _context.SaveChangesAsync();
-                    return oldCart;
+                    Name = variant.Product.Name;
+                    Price = variant.Price;
+                    Quanity = variant.AvailableQuanity;
+                    Total = Price * Quanity;
+                    return new UpdateCartModel(false, "Update cart exist fail", Name, Price, Quanity, Total);
                 }
-
-                var cart = new Cart() { UserId = userId, VariantId = variantId, Quanity = quanity };
-                Add(cart);
+                _context.Carts.Update(olcCart);
                 await _context.SaveChangesAsync();
-                return cart;
             }
-            catch (Exception ex)
+
+            var cart = new Cart();
+            cart.UserId = userId;
+            cart.VariantId = variantId;
+            cart.Quanity = quanity;
+
+            if (!CompareQuanityAndAvailableQuanity(quanity, variant.AvailableQuanity))
             {
-                _logger.LogError(ex, "Cannot CreateCartAsync in CartRepository");
+                return new UpdateCartModel(false, "Cannot create cart because quanity over than available quanity");
             }
-            return null;
+            _context.Carts.Add(cart);
+            await _context.SaveChangesAsync();
+            return new UpdateCartModel(true, "Create cart success");
         }
+
         public async Task<List<Cart>> GetCartsByUserIdAsync(int userId)
         {
             try
@@ -76,24 +91,102 @@ namespace arts_core.Interfaces
             }
             return new Cart();
         }
+
+        public async Task<UpdateCartModel> UpdateCartById(int cartId, int quanity)
+        {
+            string Name;
+            float Price;
+            int Quanity;
+            float Total;
+            try
+            {
+                var cart = await _context.Carts.FindAsync(cartId);
+                var variant = await _context.Variants.Where(v => v.Id == cart.VariantId).Include(v => v.Product).FirstOrDefaultAsync();
+                if (cart == null || variant == null)
+                    return new UpdateCartModel(false, "Update Cart false because cart or variant is null");
+
+                //kiem tra available stock cua quanity
+                if (variant.AvailableQuanity >= quanity)
+                {
+                    cart.Quanity = quanity;
+                    _context.Update(cart);
+                    _context.SaveChanges();
+
+                    Name = variant.Product.Name;
+                    Price = variant.Price;
+                    Quanity = cart.Quanity;
+                    Total = Price * Quanity;
+                    return new UpdateCartModel(true, $"Update CartId {cartId} Okay", Name, Price, Quanity, Total);
+                }
+                else
+                {
+                    cart.Quanity = variant.AvailableQuanity;
+                    _context.Update(cart);
+                    _context.SaveChanges();
+
+
+                    Name = variant.Product.Name;
+                    Price = variant.Price;
+                    Quanity = variant.AvailableQuanity;
+                    Total = Price * Quanity;
+                    return new UpdateCartModel(false, $"Update CartId {cartId} fail", Name, Price, Quanity, Total);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "cannot update cart with cartId {cartId}", cartId);
+            }
+            return new UpdateCartModel(true, "Okay");
+        }
+
+        public async Task<UpdateCartModel> DeleteCartById(int cartId)
+        {
+            try
+            {
+                var cart = _context.Carts.Find(cartId);
+                _context.Carts.Remove(cart);
+                await _context.SaveChangesAsync();
+                return new UpdateCartModel(true, $"Delete Cart {cartId} suceessfull");
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+        private bool CompareQuanityAndAvailableQuanity(int quanity, int availableQuanity)
+        {
+            if (quanity > availableQuanity)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
     }
 
-    public class VariantResponse
+    public struct UpdateCartModel
     {
-
-    }
-
-    public class UserResponse
-    {
-
-    }
-    public class ProductResponse
-    {
-
-    }
-
-    public class ProductImageResponse
-    {
-
+        public bool isOkay { get; set; } = false;
+        public string Message { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public float Price { get; set; }
+        public int Quanity { get; set; }
+        public float Total { get; set; }
+        public UpdateCartModel(bool isokay, string message, string name, float price, int quanity, float total)
+        {
+            isOkay = isokay;
+            Message = message;
+            Name = name;
+            Price = price;
+            Quanity = quanity;
+            Total = total;
+        }
+        public UpdateCartModel(bool isokay, string message)
+        {
+            isOkay = isokay;
+            Message = message;
+        }
     }
 }

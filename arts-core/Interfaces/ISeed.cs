@@ -77,7 +77,7 @@ namespace arts_core.Interfaces
             try
             {
                 var rootPath = _env.ContentRootPath;
-                var fullPath = Path.Combine(rootPath, "Data/variantAttribute.json");
+                var fullPath = Path.Combine(rootPath, "Data/variantAttributes.json");
                 var jsonData = System.IO.File.ReadAllText(fullPath);
                 _logger.LogInformation(jsonData);
                 if (string.IsNullOrWhiteSpace(jsonData))

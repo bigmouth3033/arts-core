@@ -142,23 +142,6 @@ namespace arts_core.Interfaces
 
         public async Task<CustomPaging> GetPagingProducts(int pageNumber, int pageSize, IEnumerable<int> categoryId, string searchValue)
         {
-            //var list = await _context.Products.Include(p => p.Category).Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(); 
-
-            //var total = _context.Products.Count();
-
-            //var customPaging = new CustomPaging()
-            //{
-            //    Status = 200,
-            //    Message = "OK",
-            //    CurrentPage = pageNumber,
-            //    TotalPages = (total / pageSize),
-            //    PageSize = pageSize,
-            //    TotalCount = total,
-            //    Data = list
-            //};
-
-            //return customPaging;
-
             IQueryable<Product> query;
 
             query = _context.Products;
@@ -180,15 +163,11 @@ namespace arts_core.Interfaces
 
             var total = query.Count();
 
-
-            // Step 3: Apply Pagination
             query = query.Skip((pageNumber - 1) * pageSize)
                          .Take(pageSize);
 
-            // Materialize the query results before using them
+      
             var list = await query.ToListAsync();
-
-         
 
             var customPaging = new CustomPaging()
             {
