@@ -9,6 +9,7 @@ namespace arts_core.Interfaces
         Task<Cart> CreateCartAsync(int userId, int variantId, int quanity);
         Task<Cart> FindCartByUserAndVariantAsync(int userId, int variantId);
         Task<List<Cart>> GetCartsByUserIdAsync(int userId);
+        Task<UpdateCartModel> UpdateCartById(int cartId, int quanity);
     }
 
 
@@ -76,24 +77,76 @@ namespace arts_core.Interfaces
             }
             return new Cart();
         }
+
+        public async Task<UpdateCartModel> UpdateCartById(int cartId, int quanity)
+        {
+            string Name;
+            float Price;
+            int Quanity;
+            float Total;
+            try
+            {
+                var cart = await _context.Carts.FindAsync(cartId);
+                var variant = await _context.Variants.Where(v => v.Id == cart.VariantId).Include(v => v.Product).FirstOrDefaultAsync();
+                if (cart == null || variant == null)
+                    return new UpdateCartModel(false, "Update Cart false because cart or variant is null");
+
+                //kiem tra available stock cua quanity
+                if (variant.AvailableQuanity >= quanity)
+                {
+                    cart.Quanity = quanity;
+                    _context.Update(cart);
+                    _context.SaveChanges();
+
+                    Name = variant.Product.Name;
+                    Price = variant.Price;                    
+                    Quanity = cart.Quanity;
+                    Total = Price * Quanity;
+                    return new UpdateCartModel(true, $"Update CartId {cartId} Okay", Name, Price, Quanity, Total);
+                }
+                else
+                {
+                    cart.Quanity = variant.AvailableQuanity;
+                    _context.Update(cart);
+                    _context.SaveChanges();
+
+
+                    Name = variant.Product.Name;
+                    Price = variant.Price;                    
+                    Quanity = variant.AvailableQuanity;
+                    Total = Price * Quanity;
+                    return new UpdateCartModel(false, $"Update CartId {cartId} fail", Name, Price, Quanity, Total);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "cannot update cart with cartId {cartId}", cartId);
+            }
+            return new UpdateCartModel(true, "Okay");
+        }
     }
 
-    public class VariantResponse
+    public struct UpdateCartModel
     {
-
-    }
-
-    public class UserResponse
-    {
-
-    }
-    public class ProductResponse
-    {
-
-    }
-
-    public class ProductImageResponse
-    {
-
+        public bool isOkay { get; set; } = false;
+        public string Message { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public float Price { get; set; }
+        public int Quanity { get; set; }
+        public float Total { get; set; }
+        public UpdateCartModel(bool isokay, string message, string name, float price, int quanity, float total)
+        {
+            isOkay = isokay;
+            Message = message;
+            Name = name;
+            Price = price;
+            Quanity = quanity;
+            Total = total;
+        }
+        public UpdateCartModel(bool isokay, string message)
+        {
+            isOkay = isokay;
+            Message = message;
+        }
     }
 }

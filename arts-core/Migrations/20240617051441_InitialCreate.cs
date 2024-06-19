@@ -485,6 +485,11 @@ namespace arts_core.Migrations
                     { 17, "Delivery", "OrdersStatusType" }
                 });
 
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "Active", "Address", "Avatar", "CreatedAt", "Email", "Fullname", "Password", "PhoneNumber", "RestrictedTypeId", "RoleTypeId", "UpdatedAt", "Verifired" },
+                values: new object[] { 1, false, null, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@admin.com", "Admin", "$2a$12$exQrFheHS3stHVydhi6.euQVkDzV0bplJ69dnLzAw6ls2Hmv.zP9O", null, null, 4, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserId",
                 table: "Carts",

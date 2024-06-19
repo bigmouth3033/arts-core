@@ -12,7 +12,7 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240616055433_InitialCreate")]
+    [Migration("20240617051441_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -617,6 +617,20 @@ namespace arts_core.Migrations
                     b.HasIndex("RoleTypeId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Active = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "admin@admin.com",
+                            Fullname = "Admin",
+                            Password = "$2a$12$exQrFheHS3stHVydhi6.euQVkDzV0bplJ69dnLzAw6ls2Hmv.zP9O",
+                            RoleTypeId = 4,
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Verifired = false
+                        });
                 });
 
             modelBuilder.Entity("arts_core.Models.Variant", b =>
