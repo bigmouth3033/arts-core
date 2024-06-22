@@ -95,6 +95,13 @@ namespace arts_core.Controllers
                 throw;
             }
         }
+
+        [HttpPost("TotalAmount")]
+        public async Task<IActionResult> GetTotalAmountByCartsId([FromBody]int[] cartsId)
+        {
+            var totalAmount = await _unitOfWork.CartRepository.GetTotalAmountByCartsId(cartsId);
+            return Ok(totalAmount);
+        }
     }
 
     public static class Extension

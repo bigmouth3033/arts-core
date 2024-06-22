@@ -11,6 +11,7 @@ namespace arts_core.Interfaces
         Task<List<Cart>> GetCartsByUserIdAsync(int userId);
         Task<UpdateCartModel> UpdateCartById(int cartId, int quanity);
         Task<UpdateCartModel> DeleteCartById(int cartId);
+        Task<float> GetTotalAmountByCartsId(int[] idCarts);
     }
 
 
@@ -164,8 +165,26 @@ namespace arts_core.Interfaces
                 return true;
             }
         }
+        public async Task<float> GetTotalAmountByCartsId(int[] idCarts)
+        {
+            try
+            {
+                float totalAmount = 0;
+                var carts = await _context.Carts.Include(c=> c.Variant).Where(c => idCarts.Contains(c.Id)).ToListAsync();
+                foreach (var cart in carts)
+                {
+                    totalAmount += cart.Quanity * cart.Variant.Price;
+                }
+                return totalAmount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong in GetTotalAmountByCartsId");                
+            }
+            return 0;
+        }
     }
-
+    
     public struct UpdateCartModel
     {
         public bool isOkay { get; set; } = false;
