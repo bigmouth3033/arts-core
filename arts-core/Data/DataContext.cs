@@ -25,6 +25,8 @@ namespace arts_core.Data
         public DbSet<Exchange> Exchanges { get; set; }
         public DbSet<Refund> Refunds { get; set; }
 
+        public DbSet<ReviewImage> ReviewImages { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -71,7 +73,7 @@ namespace arts_core.Data
                 .WithMany(u => u.Variants)
                 .UsingEntity<Cart>();
 
-
+            modelBuilder.Entity<ReviewImage>().HasOne(i => i.Review).WithMany(p => p.ReviewImages).HasForeignKey(i => i.ReviewId).OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ProductImage>().HasOne(i => i.Product).WithMany(p => p.ProductImages).HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.NoAction);
 
