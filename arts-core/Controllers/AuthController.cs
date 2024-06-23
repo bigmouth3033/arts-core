@@ -58,5 +58,17 @@ namespace arts_core.Controllers
 
             return Ok(customResult);
         }
+        [HttpPut]
+        [Route("verify")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> VerifyAccount()
+        {
+            var email = User.FindFirst(ClaimTypes.Email).Value;
+            var customResult = await _unitOfWork.UserRepository.VerifyAccount(email);
+
+            _unitOfWork.SaveChanges();
+
+            return Ok(customResult);
+        }
     }
 }

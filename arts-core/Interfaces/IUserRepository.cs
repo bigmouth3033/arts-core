@@ -1,8 +1,10 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
 using arts_core.RequestModels;
+using arts_core.Service;
 using Faker;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -43,18 +45,22 @@ namespace arts_core.Interfaces
         Task<User> CustomerAuthenticate(LoginRequest account);
 
         Task<CustomResult> GetUser(string email);
+        Task<CustomResult> SendMail([FromForm] MailRequest request);
+        Task<CustomResult> VerifyAccount(string email);
     }
-    
+
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
         private readonly ILogger<UserRepository> _logger;
         private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _config;
-        public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env) : base(dataContext)
+        private readonly IMailService _mailService;
+        public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env, IMailService mailService) : base(dataContext)
         {
             _logger = logger;
             _config = configuration;
             _env = env;
+            _mailService = mailService;
         }
 
         public void CreateOwner(User owner)
@@ -85,19 +91,20 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var verified = await _context.Users.Include(u => u.RoleType).Where(u => u.Email == account.Email &&( u.RoleType.Name == "Admin" || u.RoleType.Name == "Employee")).SingleOrDefaultAsync();
+                var verified = await _context.Users.Include(u => u.RoleType).Where(u => u.Email == account.Email && (u.RoleType.Name == "Admin" || u.RoleType.Name == "Employee")).SingleOrDefaultAsync();
 
-                if(verified != null)
+                if (verified != null)
                 {
-                    if(BCrypt.Net.BCrypt.Verify(account.Password, verified.Password))
+                    if (BCrypt.Net.BCrypt.Verify(account.Password, verified.Password))
                     {
                         return verified;
                     }
                 }
 
                 return null;
-                
-            }catch(Exception ex)
+
+            }
+            catch (Exception ex)
             {
                 return null;
             }
@@ -130,7 +137,7 @@ namespace arts_core.Interfaces
         {
             var user = await ManagerAuthenticate(account);
 
-            if(user == null)
+            if (user == null)
             {
                 return new CustomResult(404, "Not Found", null);
             }
@@ -144,7 +151,7 @@ namespace arts_core.Interfaces
         {
             var user = await _context.Users.Include(u => u.RoleType).SingleOrDefaultAsync(u => u.Email == email);
 
-            if(user == null)
+            if (user == null)
             {
                 return new CustomResult(400, "Bad Request", null);
             }
@@ -160,7 +167,7 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "success", list);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Bad request", ex.Message);
             }
@@ -179,7 +186,7 @@ namespace arts_core.Interfaces
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return false;
             }
@@ -198,7 +205,7 @@ namespace arts_core.Interfaces
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return false;
             }
@@ -214,7 +221,7 @@ namespace arts_core.Interfaces
                 {
                     return new CustomResult(400, "Email already exist", null);
                 }
-                if(account.Phone != null)
+                if (account.Phone != null)
                 {
                     var verifiedPhone = await CheckPhoneExist(account.Phone);
 
@@ -252,11 +259,11 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "success", employee);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "failed", ex.Message);
             }
-          
+
         }
 
         public async Task<CustomPaging> GetAllEmployees(int pageNumber, int pageSize)
@@ -310,7 +317,21 @@ namespace arts_core.Interfaces
                 };
 
                 _context.Users.Add(customer);
-                return new CustomResult(200, "success", customer);
+                // Send email 
+                var token = CreateToken(customer);
+                var mailRequest = new MailRequest
+                {
+                    ToEmail = customer.Email,
+                    Subject = "Verify Email",
+                    Body = $"<h1>Thank you for registering</h1>" +
+                           $"<p>Please verify your email by clicking the following link: " +
+                           $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"
+                };
+
+                await _mailService.SendEmailAsync(mailRequest);
+
+                return new CustomResult(200, "Account created successfully. Please verify your email.", customer);
+
             }
             catch (Exception ex)
             {
@@ -366,6 +387,40 @@ namespace arts_core.Interfaces
 
             return new CustomResult(200, "Success", user);
         }
-    }
+        public async Task<CustomResult> VerifyAccount(string email)
+        {
 
+
+            try
+            {
+                var account = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+                account.Verifired = true;
+
+                _context.Users.Update(account);
+
+                return new CustomResult(200, "success", account);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while verifying the account");
+                return new CustomResult(500, "An error occurred", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> SendMail([FromForm] MailRequest request)
+        {
+            try
+            {
+                await _mailService.SendEmailAsync(request);
+                return new CustomResult(200, "Succesed", request);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(401, "Fail", null);
+            }
+        }
+
+    }
 }
+
+

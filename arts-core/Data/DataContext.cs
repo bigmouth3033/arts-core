@@ -19,11 +19,13 @@ namespace arts_core.Data
         public DbSet<VariantAttribute> VariantAttributes { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<ReviewImage> ReviewImages { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<ProductEvent> ProductEvents { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Exchange> Exchanges { get; set; }
         public DbSet<Refund> Refunds { get; set; }
+     
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -74,6 +76,8 @@ namespace arts_core.Data
 
 
             modelBuilder.Entity<ProductImage>().HasOne(i => i.Product).WithMany(p => p.ProductImages).HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ReviewImage>().HasOne(i => i.Review).WithMany(p => p.ReviewImages).HasForeignKey(i => i.ReviewId).OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Event>(option =>
             {
@@ -150,8 +154,6 @@ namespace arts_core.Data
                     new User(){Id = 1, Email="admin@admin.com", RoleTypeId=4, Password="$2a$12$exQrFheHS3stHVydhi6.euQVkDzV0bplJ69dnLzAw6ls2Hmv.zP9O", Fullname="Admin"}
                     ]);
             });
-
         }
-
     }
 }
