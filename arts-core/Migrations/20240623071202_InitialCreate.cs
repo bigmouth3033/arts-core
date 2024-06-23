@@ -52,7 +52,8 @@ namespace arts_core.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CategoryId = table.Column<int>(type: "int", nullable: false),
-                    WarrantyDuration = table.Column<int>(type: "int", nullable: false)
+                    WarrantyDuration = table.Column<int>(type: "int", nullable: false),
+                    Unit = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -228,7 +229,8 @@ namespace arts_core.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    ProductId = table.Column<int>(type: "int", nullable: false)
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    Comment = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -255,7 +257,8 @@ namespace arts_core.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     VariantId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    Quanity = table.Column<int>(type: "int", nullable: false)
+                    Quanity = table.Column<int>(type: "int", nullable: false),
+                    IsChecked = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -393,6 +396,25 @@ namespace arts_core.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ReviewImages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReviewId = table.Column<int>(type: "int", nullable: false),
+                    ImageName = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReviewImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ReviewImages_Reviews_ReviewId",
+                        column: x => x.ReviewId,
+                        principalTable: "Reviews",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Exchanges",
                 columns: table => new
                 {
@@ -485,6 +507,11 @@ namespace arts_core.Migrations
                     { 17, "Delivery", "OrdersStatusType" }
                 });
 
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "Active", "Address", "Avatar", "CreatedAt", "Email", "Fullname", "Password", "PhoneNumber", "RestrictedTypeId", "RoleTypeId", "UpdatedAt", "Verifired" },
+                values: new object[] { 1, false, null, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@admin.com", "Admin", "$2a$12$exQrFheHS3stHVydhi6.euQVkDzV0bplJ69dnLzAw6ls2Hmv.zP9O", null, null, 4, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserId",
                 table: "Carts",
@@ -576,6 +603,11 @@ namespace arts_core.Migrations
                 column: "PaymentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReviewImages_ReviewId",
+                table: "ReviewImages",
+                column: "ReviewId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Reviews_ProductId",
                 table: "Reviews",
                 column: "ProductId");
@@ -638,7 +670,7 @@ namespace arts_core.Migrations
                 name: "Refunds");
 
             migrationBuilder.DropTable(
-                name: "Reviews");
+                name: "ReviewImages");
 
             migrationBuilder.DropTable(
                 name: "TypeVariant");
@@ -653,19 +685,22 @@ namespace arts_core.Migrations
                 name: "Orders");
 
             migrationBuilder.DropTable(
-                name: "Payments");
+                name: "Reviews");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "Variants");
 
             migrationBuilder.DropTable(
-                name: "Types");
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Products");
+
+            migrationBuilder.DropTable(
+                name: "Types");
 
             migrationBuilder.DropTable(
                 name: "Categories");

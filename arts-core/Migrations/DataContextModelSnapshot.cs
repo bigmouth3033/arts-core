@@ -45,6 +45,9 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsChecked")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Quanity")
                         .HasColumnType("int");
 
@@ -428,6 +431,9 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Comment")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
@@ -441,6 +447,27 @@ namespace arts_core.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("arts_core.Models.ReviewImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ReviewId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewId");
+
+                    b.ToTable("ReviewImages");
                 });
 
             modelBuilder.Entity("arts_core.Models.Type", b =>
@@ -906,6 +933,17 @@ namespace arts_core.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("arts_core.Models.ReviewImage", b =>
+                {
+                    b.HasOne("arts_core.Models.Review", "Review")
+                        .WithMany("ReviewImages")
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+                });
+
             modelBuilder.Entity("arts_core.Models.User", b =>
                 {
                     b.HasOne("arts_core.Models.Type", "RestrictedType")
@@ -974,6 +1012,11 @@ namespace arts_core.Migrations
                     b.Navigation("ProductImages");
 
                     b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Review", b =>
+                {
+                    b.Navigation("ReviewImages");
                 });
 
             modelBuilder.Entity("arts_core.Models.Type", b =>
