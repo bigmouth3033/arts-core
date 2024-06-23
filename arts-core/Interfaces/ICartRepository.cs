@@ -6,11 +6,14 @@ namespace arts_core.Interfaces
 {
     public interface ICartRepository : IRepository<Cart>
     {
-        Task<UpdateCartModel> CreateCartAsync(int userId, int variantId, int quanity);
+        Task<UpdateCartModel> CreateCartAsync(string email, int variantId, int quanity);
         Task<Cart> FindCartByUserAndVariantAsync(int userId, int variantId);
         Task<List<Cart>> GetCartsByUserIdAsync(int userId);
         Task<UpdateCartModel> UpdateCartById(int cartId, int quanity);
         Task<UpdateCartModel> DeleteCartById(int cartId);
+        Task<float> GetTotalAmountByCartsId(int[] idCarts);
+
+        Task<CustomResult> GetUserCartQuantity(string email);
     }
 
 
@@ -22,15 +25,18 @@ namespace arts_core.Interfaces
             _logger = logger;
         }
 
-        public async Task<UpdateCartModel> CreateCartAsync(int userId, int variantId, int quanity)
+        public async Task<UpdateCartModel> CreateCartAsync(string email, int variantId, int quanity)
         {
             string Name;
             float Price;
             int Quanity;
             float Total;
             //kiem tra xem card da tung tao chua va update
-            var olcCart = _context.Carts.Where(c => c.UserId == userId && c.VariantId == variantId).FirstOrDefault();
+
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+            var olcCart = await _context.Carts.Where(c => c.UserId == user.Id && c.VariantId == variantId).SingleOrDefaultAsync();
             var variant = await _context.Variants.Include(v => v.Product).FirstOrDefaultAsync(v => v.Id == variantId);
+
             if (olcCart != null)
             {
                 olcCart.Quanity += quanity;
@@ -44,16 +50,18 @@ namespace arts_core.Interfaces
                 }
                 _context.Carts.Update(olcCart);
                 await _context.SaveChangesAsync();
+
+                return new UpdateCartModel(true, "Update cart success");
             }
 
             var cart = new Cart();
-            cart.UserId = userId;
+            cart.UserId = user.Id;
             cart.VariantId = variantId;
             cart.Quanity = quanity;
 
             if (!CompareQuanityAndAvailableQuanity(quanity, variant.AvailableQuanity))
             {
-                return new UpdateCartModel(false, "Cannot create cart because quanity over than available quanity");
+                return new UpdateCartModel(false, "Cannot create cart because quanity over than available quanity","",0, quanity: variant.AvailableQuanity,0);
             }
             _context.Carts.Add(cart);
             await _context.SaveChangesAsync();
@@ -164,6 +172,33 @@ namespace arts_core.Interfaces
                 return true;
             }
         }
+        public async Task<float> GetTotalAmountByCartsId(int[] idCarts)
+        {
+            try
+            {
+                float totalAmount = 0;
+                var carts = await _context.Carts.Include(c => c.Variant).Where(c => idCarts.Contains(c.Id)).ToListAsync();
+                foreach (var cart in carts)
+                {
+                    totalAmount += cart.Quanity * cart.Variant.Price;
+                }
+                return totalAmount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong in GetTotalAmountByCartsId");
+            }
+            return 0;
+        }
+
+        public async Task<CustomResult> GetUserCartQuantity(string email)
+        {
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+
+            var quantity = _context.Carts.Where(c => c.UserId == user.Id).Count();
+
+            return new CustomResult(200, "Success", quantity);
+        }
     }
 
     public struct UpdateCartModel
@@ -190,3 +225,7 @@ namespace arts_core.Interfaces
         }
     }
 }
+
+   
+
+

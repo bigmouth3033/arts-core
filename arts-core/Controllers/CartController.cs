@@ -1,7 +1,10 @@
 ﻿using arts_core.Interfaces;
 using arts_core.Models;
+using arts_core.RequestModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace arts_core.Controllers
 {
@@ -16,6 +19,38 @@ namespace arts_core.Controllers
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
+
+
+
+        [HttpGet]
+        [Route("quantity")]
+        [Authorize]
+        public async Task<IActionResult> GetUserCartQuantity()
+        {
+            var email = User.FindFirst(ClaimTypes.Email).Value;
+
+            var customResult= await _unitOfWork.CartRepository.GetUserCartQuantity(email);
+
+            return Ok(customResult);
+        } 
+
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> CreateCart([FromForm] CartRequest cartRequest)
+        {
+
+            var email = User.FindFirst(ClaimTypes.Email).Value;
+            var result = await _unitOfWork.CartRepository.CreateCartAsync(email, cartRequest.VariantId, cartRequest.Quantity);
+
+            if (result.isOkay)
+            {
+                return Ok(new CustomResult(201, $"{result.Message}", result));
+            }
+
+            return Ok(new CustomResult(405, $"Create cartId fail", result));
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetCarts()
         {
@@ -47,23 +82,6 @@ namespace arts_core.Controllers
             return Ok("");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateCart(int userId, int variantId, int quanity)
-        {
-            try
-            {
-                var result = await _unitOfWork.CartRepository.CreateCartAsync(userId, variantId, quanity);
-                if (result.isOkay)
-                    return Ok(new CustomResult(201, $"{result.Message}", result));
-                else
-                    return Ok(new CustomResult(405, $"Create cartId fail", result));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Something wrong when CreateCart in CartController");
-            }
-            return Ok("smt");
-        }
         [HttpPut]
         public async Task<IActionResult> UpdateCart(int cartId, int quanity)
         {
@@ -95,6 +113,14 @@ namespace arts_core.Controllers
                 throw;
             }
         }
+
+        [HttpPost("TotalAmount")]
+        public async Task<IActionResult> GetTotalAmountByCartsId([FromBody] int[] cartsId)
+        {
+            var totalAmount = await _unitOfWork.CartRepository.GetTotalAmountByCartsId(cartsId);
+            return Ok(totalAmount);
+        }
+
     }
 
     public static class Extension

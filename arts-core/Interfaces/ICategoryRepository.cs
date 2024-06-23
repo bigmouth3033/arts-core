@@ -9,6 +9,8 @@ namespace arts_core.Interfaces
         Task<CustomResult> GetAllCategories();
 
         CustomResult CreateNewCategory(Category category);
+
+        
     }
 
     public class CategoryRepository : GenericRepository<Category>, ICategoryRepository
