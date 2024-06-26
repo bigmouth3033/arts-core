@@ -206,10 +206,24 @@ namespace arts_core.Interfaces
             List<int> listCartIsNotAvailable = new List<int>();
             try
             {
-                var carts = await _context.Carts.Include(c => c.Variant).Where(c => c.UserId == userId).ToListAsync();
+                var carts = await _context.Carts.Include(c => c.Variant).ThenInclude(v => v.Product)
+                    .Where(c => c.UserId == userId).ToListAsync();
+
+                if (!isCheckedState)
+                {
+                    foreach (var cart in carts)
+                    {
+                        cart.IsChecked = isCheckedState;
+                    }
+                    _context.Carts.UpdateRange(carts);
+                    await _context.SaveChangesAsync();
+                    return new CustomResult(203, "Set Checked All is False", null);
+                }
+
+
                 foreach (var cart in carts)
                 {
-                    if (cart.Variant.AvailableQuanity == 0 || !cart.Variant.Active)
+                    if (cart.Variant.AvailableQuanity == 0 || !cart.Variant.Product.IsActive || cart.Quanity > cart.Variant.AvailableQuanity)
                     {
                         listCartIsNotAvailable.Add(cart.Id);
                         continue;
@@ -218,6 +232,8 @@ namespace arts_core.Interfaces
                 }
                 _context.Carts.UpdateRange(carts);
                 await _context.SaveChangesAsync();
+
+
                 if (listCartIsNotAvailable.Count > 0)
                 {
                     return new CustomResult(201, "Some product cannot select", listCartIsNotAvailable);
@@ -244,11 +260,21 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var cart = await _context.Carts.Include(c => c.Variant).FirstOrDefaultAsync(c => c.Id == cartId);
-                if (cart.Variant.AvailableQuanity < cart.Quanity || !cart.Variant.Active)
+                var cart = await _context.Carts.Include(c => c.Variant).ThenInclude(v => v.Product).FirstOrDefaultAsync(c => c.Id == cartId);
+
+                if (!isCheckedState)
                 {
-                    return new CustomResult(401, $"cart quantity {cart.Quanity} > variant available quanity {cart.Variant.AvailableQuanity} or variant is not active ", null);
+                    cart.IsChecked = isCheckedState;
+                    _context.Carts.Update(cart);
+                    await _context.SaveChangesAsync();
+                    return new CustomResult(204, "Set Checked All is False", null);
                 }
+
+                if (!cart.Variant.Product.IsActive || cart.Variant.AvailableQuanity == 0 || cart.Quanity > cart.Variant.AvailableQuanity)
+                {
+                    return new CustomResult(203, $"Product is not Available because cartquantity > variantquantity or variant isn't active", null);
+                }
+
                 cart.IsChecked = isCheckedState;
                 _context.Carts.Update(cart);
                 await _context.SaveChangesAsync();

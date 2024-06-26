@@ -26,7 +26,7 @@ namespace arts_core.Interfaces
 
                 var total = _context.Orders.Count();
 
-                var customPaging = new CustomPaging()
+                var customPaging = new CustomPaging()   
                 {
                     Status = 200,
                     Message = "OK",
