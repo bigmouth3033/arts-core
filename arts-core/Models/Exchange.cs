@@ -3,9 +3,9 @@
     public class Exchange
     {
         public int Id { get; set; }
-        public string? OriginalOrderId { get; set; }
+        public int OriginalOrderId { get; set; }
         public Order? OriginalOrder { get; set; }
-        public string? NewOrderId { get; set; }
+        public int NewOrderId { get; set; }
         public Order? NewOrder { get; set; }
         public string? ReasonExchange { get; set; }
         public string? ResponseExchange { get; set; }

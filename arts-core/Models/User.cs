@@ -12,6 +12,8 @@
         public bool Verifired { get; set; } = false;
         public DateTime CreatedAt { get; set; } 
         public DateTime UpdatedAt { get; set; } 
+
+        public DateTime? Dob {  get; set; }
         public bool Active { get; set; } = false ;
         public int? RoleTypeId { get; set; }
         public Type? RoleType { get; set; }
@@ -20,6 +22,10 @@
         public ICollection<Order>? Orders { get; set; }
         public ICollection<Message>? Messages { get; set; }
         public ICollection<Variant>? Variants { get; set; }
+
+        public string? Gender { get; set; }
+
+        public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     }
 }

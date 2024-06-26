@@ -88,13 +88,11 @@ namespace arts_core.Controllers
 
         [HttpGet]
         [Route("listing-page")]
-        public async Task<IActionResult> GetPagingProductForListingPage([FromQuery] int categoryId, [FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] int sort, [FromQuery] string searchValue = "")
+        public async Task<IActionResult> GetPagingProductForListingPage([FromQuery] int categoryId, [FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] int sort, [FromQuery] string searchValue = "", [FromQuery] float priceRangeMin = 0, [FromQuery] float priceRangeMax = float.MaxValue)
         {
-            var customPaging = await _unitOfWork.ProductRepository.GetPagingProductForListingPage(categoryId, pageNumber, pageSize, sort, searchValue);
+            var customPaging = await _unitOfWork.ProductRepository.GetPagingProductForListingPage(categoryId, pageNumber, pageSize, sort, searchValue, priceRangeMin, priceRangeMax);
 
             return Ok(customPaging);
         }
-
-
     }
 }

@@ -43,8 +43,12 @@ namespace arts_core.Interfaces
         Task<User> CustomerAuthenticate(LoginRequest account);
 
         Task<CustomResult> GetUser(string email);
+
+        Task<CustomResult> ChangeUserImage(string email, IFormFile image);
+
+        Task<CustomResult> EditUserInfo(string email, UpdateUserRequest info);
     }
-    
+
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
         private readonly ILogger<UserRepository> _logger;
@@ -85,19 +89,20 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var verified = await _context.Users.Include(u => u.RoleType).Where(u => u.Email == account.Email &&( u.RoleType.Name == "Admin" || u.RoleType.Name == "Employee")).SingleOrDefaultAsync();
+                var verified = await _context.Users.Include(u => u.RoleType).Where(u => u.Email == account.Email && (u.RoleType.Name == "Admin" || u.RoleType.Name == "Employee")).SingleOrDefaultAsync();
 
-                if(verified != null)
+                if (verified != null)
                 {
-                    if(BCrypt.Net.BCrypt.Verify(account.Password, verified.Password))
+                    if (BCrypt.Net.BCrypt.Verify(account.Password, verified.Password))
                     {
                         return verified;
                     }
                 }
 
                 return null;
-                
-            }catch(Exception ex)
+
+            }
+            catch (Exception ex)
             {
                 return null;
             }
@@ -130,7 +135,7 @@ namespace arts_core.Interfaces
         {
             var user = await ManagerAuthenticate(account);
 
-            if(user == null)
+            if (user == null)
             {
                 return new CustomResult(404, "Not Found", null);
             }
@@ -144,7 +149,7 @@ namespace arts_core.Interfaces
         {
             var user = await _context.Users.Include(u => u.RoleType).SingleOrDefaultAsync(u => u.Email == email);
 
-            if(user == null)
+            if (user == null)
             {
                 return new CustomResult(400, "Bad Request", null);
             }
@@ -160,7 +165,7 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "success", list);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Bad request", ex.Message);
             }
@@ -179,7 +184,7 @@ namespace arts_core.Interfaces
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return false;
             }
@@ -198,7 +203,7 @@ namespace arts_core.Interfaces
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return false;
             }
@@ -214,7 +219,7 @@ namespace arts_core.Interfaces
                 {
                     return new CustomResult(400, "Email already exist", null);
                 }
-                if(account.Phone != null)
+                if (account.Phone != null)
                 {
                     var verifiedPhone = await CheckPhoneExist(account.Phone);
 
@@ -252,11 +257,11 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "success", employee);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "failed", ex.Message);
             }
-          
+
         }
 
         public async Task<CustomPaging> GetAllEmployees(int pageNumber, int pageSize)
@@ -365,6 +370,67 @@ namespace arts_core.Interfaces
             }
 
             return new CustomResult(200, "Success", user);
+        }
+
+        public async Task<CustomResult> ChangeUserImage(string email, IFormFile image)
+        {
+            try
+            {
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+                var fileName = DateTime.Now.Ticks + image.FileName;
+                var uploadPath = Path.Combine(_env.WebRootPath, "images");
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                image.CopyTo(stream);
+                user.Avatar = fileName;
+
+                _context.Users.Update(user);
+
+                await _context.SaveChangesAsync();
+
+                return new CustomResult(200, "Success", user);
+            }
+            catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+
+
+        }
+
+        public async Task<CustomResult> EditUserInfo(string email, UpdateUserRequest info)
+        {
+            try
+            {
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+
+                user.Fullname = info.FullName;
+                user.Dob = DateTime.Parse(info.Dob);
+                user.Gender = info.Gender;
+
+                if (user.PhoneNumber != info.PhoneNumber)
+                {
+                    var verified = await CheckPhoneExist(info.PhoneNumber);
+                    if (verified)
+                    {
+                        return new CustomResult(400, "Phone number exist", null);
+                    }
+
+                    user.PhoneNumber = info.PhoneNumber;
+                }
+
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+                return new CustomResult(200, "Success", user);
+            }
+            catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+
+
+
         }
     }
 

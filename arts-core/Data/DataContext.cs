@@ -25,6 +25,8 @@ namespace arts_core.Data
         public DbSet<Exchange> Exchanges { get; set; }
         public DbSet<Refund> Refunds { get; set; }
 
+        public DbSet<Address> Addresses { get; set; }
+
         public DbSet<ReviewImage> ReviewImages { get; set; }
 
 
@@ -48,7 +50,6 @@ namespace arts_core.Data
                .WithMany()
                .HasForeignKey(p => p.DeliveryTypeId)
                .OnDelete(DeleteBehavior.NoAction);
-
 
             modelBuilder.Entity<Exchange>()
                 .HasOne(e => e.OriginalOrder)
@@ -75,7 +76,13 @@ namespace arts_core.Data
 
             modelBuilder.Entity<ReviewImage>().HasOne(i => i.Review).WithMany(p => p.ReviewImages).HasForeignKey(i => i.ReviewId).OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Address>().HasOne(a => a.User).WithMany(u => u.Addresses).HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Payment>().HasOne(p => p.Address).WithMany(a => a.Payments).HasForeignKey(p => p.AddressId).OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<ProductImage>().HasOne(i => i.Product).WithMany(p => p.ProductImages).HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Order>().HasOne(i => i.OrderStatusType).WithMany(p => p.Orders).HasForeignKey(i => i.OrderStatusId).OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Event>(option =>
             {
@@ -109,6 +116,8 @@ namespace arts_core.Data
             {
                 option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
             });
+
+            
 
             modelBuilder.Entity<Models.Type>(option =>
             {

@@ -9,6 +9,7 @@
         public ICollection<Payment>? Payments { get; set; }
         public ICollection<Event>? Events { get; set; }
         public virtual ICollection<Variant>? Variants { get; set; }
+        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     }
 }

@@ -114,11 +114,75 @@ namespace arts_core.Controllers
             }
         }
 
-        [HttpPost("TotalAmount")]
-        public async Task<IActionResult> GetTotalAmountByCartsId([FromBody] int[] cartsId)
+        [HttpGet("TotalAmount")]
+        public async Task<IActionResult> GetTotalAmount()
         {
-            var totalAmount = await _unitOfWork.CartRepository.GetTotalAmountByCartsId(cartsId);
-            return Ok(totalAmount);
+
+            int userId;
+            string idClaim;
+            try
+            {
+                if (User.Claims.Any() && User.Claims != null)
+                {
+                    idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+                    int.TryParse(idClaim, out userId);
+                    var result = await _unitOfWork.CartRepository.GetTotalAmountByUserId(userId);
+                    return Ok(result);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+            return Ok("");
+        }
+
+        [HttpPut("UpdateAllCartChecked")]
+        public async Task<IActionResult> UpdateAllCartChecked([FromForm] bool isCheckedState)
+        {
+            int userId;
+            string idClaim;
+            try
+            {
+                if (User.Claims.Any() && User.Claims != null)
+                {
+                    idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+                    int.TryParse(idClaim, out userId);
+                    var result = await _unitOfWork.CartRepository.UpdateAllCartCheckedAsync(userId, isCheckedState);
+                    return Ok(result);
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+            return Ok("");
+        }
+
+        [HttpPut("UpdateCartCheckedById")]
+        public async Task<IActionResult> UpdateCartCheckedById([FromForm] int cartId, [FromForm] bool isCheckedState)
+        {
+            var result = await _unitOfWork.CartRepository.UpdateCartCheckedByIdAsync(cartId, isCheckedState);
+
+            return Ok(result);
+        }
+
+        [HttpPost("CreatePayment")]
+        [Authorize]
+        public async Task<IActionResult> CreatePayment([FromForm] PaymentRequest paymentRequest)
+        {
+            int userId;
+            string idClaim;
+            idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+            int.TryParse(idClaim, out userId);
+
+            var customResult = await _unitOfWork.CartRepository.CreatePayment(userId, paymentRequest);
+
+           _unitOfWork.SaveChanges();
+            return Ok(customResult);
+
         }
 
     }
@@ -130,4 +194,6 @@ namespace arts_core.Controllers
             return records.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
         }
     }
+
+
 }

@@ -27,7 +27,7 @@ namespace arts_core.Interfaces
         public Task<CustomResult> DeleteImage(int imageId);
 
         //Paginagion for product listing-page
-        public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue);
+        public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax);
 
     }
 
@@ -305,7 +305,7 @@ namespace arts_core.Interfaces
             }
         }
 
-        public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue)
+        public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax)
         {
             IQueryable<Product> query;
 
@@ -318,17 +318,26 @@ namespace arts_core.Interfaces
                 query = _context.Products
                                 .Where(p => p.CategoryId == categoryId);
             }
+
+
+            //Step 2: Search
             query = query.Where(p => p.Name.Contains(searchValue));
 
+            // Step 3: Include Related Entities
+            query = query.Include(p => p.ProductImages)
+                         .Include(p => p.Variants);
+
+            // Step 4: Filter by price range
+
+
+            query = query.Where(p => p.Variants.Any(v => v.Price >= priceRangeMin && v.Price <= priceRangeMax));
+
+
+            // Step 5: Sort
             if (sort == 1)
             {
                 query = query.OrderByDescending(p => p.CreatedAt);
             }
-
-            // Step 2: Include Related Entities
-            query = query.Include(p => p.ProductImages)
-                         .Include(p => p.Variants);
-
             //sort Low to High price(Min Price (base on Variant) of A Product)
             if (sort == 2)
             {
@@ -341,15 +350,13 @@ namespace arts_core.Interfaces
                 query = query.OrderByDescending(p => p.Variants.Min(v => v.Price));
             }
 
-            // Step 3: Apply Pagination
+            // Step 6: Apply Pagination
             var total = query.Count();
             query = query.Skip((pageNumber - 1) * pageSize)
                          .Take(pageSize);
 
             // Materialize the query results before using them
             var list = await query.ToListAsync();
-
-
 
             var customPaging = new CustomPaging()
             {

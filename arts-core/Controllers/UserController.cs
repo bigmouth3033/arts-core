@@ -4,6 +4,7 @@ using arts_core.RequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace arts_core.Controllers
 {
@@ -64,5 +65,28 @@ namespace arts_core.Controllers
             return Ok(customPaging);
         }
 
+        [HttpPost]
+        [Route("change-image")]
+        [Authorize]
+        public async Task<IActionResult> ChangeUserAvatar([FromForm] IFormFile image)
+        {
+            var email = User.FindFirst(ClaimTypes.Email).Value;
+
+            var customResult = await _unitOfWork.UserRepository.ChangeUserImage(email, image);
+
+            return Ok(customResult);
+        }
+
+        [HttpPost]
+        [Route("change-info")]
+        [Authorize]
+        public async Task<IActionResult> ChangeUserInfo([FromForm] UpdateUserRequest info)
+        {
+            var email = User.FindFirst(ClaimTypes.Email).Value;
+
+            var customResult = await _unitOfWork.UserRepository.EditUserInfo(email, info);
+
+            return Ok(customResult);
+        }
     }
 }

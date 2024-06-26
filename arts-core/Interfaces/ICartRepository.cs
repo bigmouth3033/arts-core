@@ -1,5 +1,6 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
+using arts_core.RequestModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace arts_core.Interfaces
@@ -7,13 +8,17 @@ namespace arts_core.Interfaces
     public interface ICartRepository : IRepository<Cart>
     {
         Task<UpdateCartModel> CreateCartAsync(string email, int variantId, int quanity);
+        Task<CustomResult> GetUserCartQuantity(string email);
         Task<Cart> FindCartByUserAndVariantAsync(int userId, int variantId);
         Task<List<Cart>> GetCartsByUserIdAsync(int userId);
         Task<UpdateCartModel> UpdateCartById(int cartId, int quanity);
         Task<UpdateCartModel> DeleteCartById(int cartId);
-        Task<float> GetTotalAmountByCartsId(int[] idCarts);
+        Task<CustomResult> GetTotalAmountByUserId(int userId);
+        Task<CustomResult> UpdateAllCartCheckedAsync(int userId, bool isCheckedState);
+        Task<CustomResult> UpdateCartCheckedByIdAsync(int cartId, bool isCheckedState);
 
-        Task<CustomResult> GetUserCartQuantity(string email);
+        Task<CustomResult> CreatePayment(int userId, PaymentRequest paymentRequest);
+
     }
 
 
@@ -61,7 +66,7 @@ namespace arts_core.Interfaces
 
             if (!CompareQuanityAndAvailableQuanity(quanity, variant.AvailableQuanity))
             {
-                return new UpdateCartModel(false, "Cannot create cart because quanity over than available quanity","",0, quanity: variant.AvailableQuanity,0);
+                return new UpdateCartModel(false, "Cannot create cart because quanity over than available quanity", "", 0, quanity: variant.AvailableQuanity, 0);
             }
             _context.Carts.Add(cart);
             await _context.SaveChangesAsync();
@@ -172,23 +177,59 @@ namespace arts_core.Interfaces
                 return true;
             }
         }
-        public async Task<float> GetTotalAmountByCartsId(int[] idCarts)
+        public async Task<CustomResult> GetTotalAmountByUserId(int userId)
         {
             try
             {
                 float totalAmount = 0;
-                var carts = await _context.Carts.Include(c => c.Variant).Where(c => idCarts.Contains(c.Id)).ToListAsync();
+                var carts = await _context.Carts.Include(c => c.Variant).Where(c => c.UserId == userId).ToListAsync();
                 foreach (var cart in carts)
                 {
-                    totalAmount += cart.Quanity * cart.Variant.Price;
+                    float amount = 0;
+                    if (cart.IsChecked)
+                    {
+                        amount = cart.Quanity * cart.Variant.Price;
+                        totalAmount += amount;
+                    }
                 }
-                return totalAmount;
+                return new CustomResult(200, "TotalPayment succes", totalAmount);
+
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Something wrong in GetTotalAmountByCartsId");
+                _logger.LogError(ex, "something went wrong in GetTotalAmountByUserId");
+                throw;
             }
-            return 0;
+        }
+        public async Task<CustomResult> UpdateAllCartCheckedAsync(int userId, bool isCheckedState)
+        {
+            List<int> listCartIsNotAvailable = new List<int>();
+            try
+            {
+                var carts = await _context.Carts.Include(c => c.Variant).Where(c => c.UserId == userId).ToListAsync();
+                foreach (var cart in carts)
+                {
+                    if (cart.Variant.AvailableQuanity == 0 || !cart.Variant.Active)
+                    {
+                        listCartIsNotAvailable.Add(cart.Id);
+                        continue;
+                    }
+                    cart.IsChecked = isCheckedState;
+                }
+                _context.Carts.UpdateRange(carts);
+                await _context.SaveChangesAsync();
+                if (listCartIsNotAvailable.Count > 0)
+                {
+                    return new CustomResult(201, "Some product cannot select", listCartIsNotAvailable);
+                }
+                return new CustomResult(200, "Successfull", null);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something went wrong in UpdateAllCartCheckedAsync");
+            }
+            return new CustomResult(400, "updatefail", null);
         }
 
         public async Task<CustomResult> GetUserCartQuantity(string email)
@@ -198,6 +239,78 @@ namespace arts_core.Interfaces
             var quantity = _context.Carts.Where(c => c.UserId == user.Id).Count();
 
             return new CustomResult(200, "Success", quantity);
+        }
+        public async Task<CustomResult> UpdateCartCheckedByIdAsync(int cartId, bool isCheckedState)
+        {
+            try
+            {
+                var cart = await _context.Carts.Include(c => c.Variant).FirstOrDefaultAsync(c => c.Id == cartId);
+                if (cart.Variant.AvailableQuanity < cart.Quanity || !cart.Variant.Active)
+                {
+                    return new CustomResult(401, $"cart quantity {cart.Quanity} > variant available quanity {cart.Variant.AvailableQuanity} or variant is not active ", null);
+                }
+                cart.IsChecked = isCheckedState;
+                _context.Carts.Update(cart);
+                await _context.SaveChangesAsync();
+                return new CustomResult(200, "Update field isCcheck success", null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UpdateCartCheckedAsync went wrong");
+                throw;
+            }
+        }
+
+        public async Task<CustomResult> CreatePayment(int userId, PaymentRequest paymentRequest)
+        {
+            try
+            {
+                //send as FromForm format => create PaymentRequest to receive that request
+                //create a new payment
+                var payment = new Payment
+                {
+                    PaymentTypeId = paymentRequest.PaymentTypeId,
+                    DeliveryTypeId = paymentRequest.DeliveryTypeId,
+                    AddressId = paymentRequest.AddressId,
+                    ShipFee = paymentRequest.DeliveryTypeId == 1 ? 5 : 3,
+                    IsCancel = false,
+                };
+
+                _context.Payments.Add(payment);
+
+                //get checked items in cart
+                var userCheckedItems = await _context.Carts.Include(p => p.Variant).Where(i => i.UserId == userId && i.IsChecked == true).ToListAsync();
+
+                foreach (var item in userCheckedItems)
+                {
+                    var order = new Order
+                    {
+                        UserId = userId,
+                        VariantId = item.VariantId,
+                        Quanity = item.Quanity,
+                        OrderStatusId = 13,
+                        Payment = payment,
+                        TotalPrice = item.Quanity * item.Variant.Price
+                    };
+
+                    var variant = await _context.Variants.SingleOrDefaultAsync(p => p.Id == item.VariantId);
+
+                    variant.AvailableQuanity -= item.Quanity;
+
+                    _context.Variants.Update(variant);
+
+                    _context.Orders.Add(order);
+
+                    _context.Carts.Remove(item);
+                }
+                
+                return new CustomResult(200, "Create payment success", payment);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "Create payment faillll", ex.Message);
+            }
+
         }
     }
 
@@ -226,6 +339,6 @@ namespace arts_core.Interfaces
     }
 }
 
-   
+
 
 
