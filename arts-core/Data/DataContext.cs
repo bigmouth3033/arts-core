@@ -57,10 +57,9 @@ namespace arts_core.Data
                 .HasForeignKey(e => e.OriginalOrderId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<Refund>()
-                .HasOne(r => r.Payment)
-                .WithMany(p => p.Refunds)
-                .HasForeignKey(r => r.PaymentId)
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Refund)
+                .WithOne(r => r.Order)                
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Order>()

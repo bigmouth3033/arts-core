@@ -12,6 +12,6 @@
         public int AddressId { get; set; }
         public virtual Address? Address { get; set; }
         public ICollection<Order>? Orders { get; set; }
-        public ICollection<Refund>? Refunds { get; set; }
+        //public ICollection<Refund>? Refunds { get; set; }
     }
 }

@@ -4,11 +4,12 @@
     {
         public int Id { get; set; }
         public int OrderId { get; set; }
-        public Order? Order { get; set; }
-        public int PaymentId { get; set; }
-        public Payment? Payment { get; set; }
+        public Order? Order { get; set; }       
         public string? ReasonRefund { get; set; }
         public string? ResponseRefund { get; set; }
+        public float AmountRefund { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public string Status { get; set; } = "Pending";
     }
 }

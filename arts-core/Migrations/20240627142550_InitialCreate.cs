@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace arts_core.Migrations
 {
     /// <inheritdoc />
-    public partial class initialCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -361,7 +361,6 @@ namespace arts_core.Migrations
                     ShipFee = table.Column<float>(type: "real", nullable: false),
                     PaymentTypeId = table.Column<int>(type: "int", nullable: false),
                     DeliveryTypeId = table.Column<int>(type: "int", nullable: false),
-                    PaymentStatusTypeId = table.Column<int>(type: "int", nullable: false),
                     IsCancel = table.Column<bool>(type: "bit", nullable: false),
                     AddressId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -378,12 +377,6 @@ namespace arts_core.Migrations
                         column: x => x.DeliveryTypeId,
                         principalTable: "Types",
                         principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Payments_Types_PaymentStatusTypeId",
-                        column: x => x.PaymentStatusTypeId,
-                        principalTable: "Types",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Payments_Types_PaymentTypeId",
                         column: x => x.PaymentTypeId,
@@ -419,10 +412,7 @@ namespace arts_core.Migrations
                     UserId = table.Column<int>(type: "int", nullable: false),
                     VariantId = table.Column<int>(type: "int", nullable: false),
                     Quanity = table.Column<int>(type: "int", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OrderStatusId = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TotalPrice = table.Column<float>(type: "real", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
                     PaymentId = table.Column<int>(type: "int", nullable: false)
@@ -460,8 +450,8 @@ namespace arts_core.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    OriginalOrderId = table.Column<int>(type: "int", nullable: false),
-                    NewOrderId = table.Column<int>(type: "int", nullable: false),
+                    OriginalOrderId = table.Column<int>(type: "int", nullable: true),
+                    NewOrderId = table.Column<int>(type: "int", nullable: true),
                     ReasonExchange = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResponseExchange = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ExchangeDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
@@ -474,8 +464,7 @@ namespace arts_core.Migrations
                         name: "FK_Exchanges_Orders_NewOrderId",
                         column: x => x.NewOrderId,
                         principalTable: "Orders",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Exchanges_Orders_OriginalOrderId",
                         column: x => x.OriginalOrderId,
@@ -490,9 +479,9 @@ namespace arts_core.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderId = table.Column<int>(type: "int", nullable: false),
-                    PaymentId = table.Column<int>(type: "int", nullable: false),
                     ReasonRefund = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResponseRefund = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AmountRefund = table.Column<float>(type: "real", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -502,12 +491,6 @@ namespace arts_core.Migrations
                         name: "FK_Refunds_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Refunds_Payments_PaymentId",
-                        column: x => x.PaymentId,
-                        principalTable: "Payments",
                         principalColumn: "Id");
                 });
 
@@ -620,11 +603,6 @@ namespace arts_core.Migrations
                 column: "DeliveryTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payments_PaymentStatusTypeId",
-                table: "Payments",
-                column: "PaymentStatusTypeId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Payments_PaymentTypeId",
                 table: "Payments",
                 column: "PaymentTypeId");
@@ -652,12 +630,8 @@ namespace arts_core.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Refunds_OrderId",
                 table: "Refunds",
-                column: "OrderId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Refunds_PaymentId",
-                table: "Refunds",
-                column: "PaymentId");
+                column: "OrderId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ReviewImages_ReviewId",
