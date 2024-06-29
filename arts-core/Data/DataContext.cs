@@ -84,6 +84,8 @@ namespace arts_core.Data
 
             modelBuilder.Entity<Order>().HasOne(i => i.OrderStatusType).WithMany(p => p.Orders).HasForeignKey(i => i.OrderStatusId).OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Order>().HasOne(o => o.Payment).WithMany(p => p.Orders).HasForeignKey(o => o.PaymentId).OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<Event>(option =>
             {
                 option.Property(e => e.StartDate).HasDefaultValueSql("GETDATE()");
@@ -104,6 +106,12 @@ namespace arts_core.Data
             modelBuilder.Entity<Order>(option =>
             {
                 option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+                option.Property(e => e.UpdatedAt).HasDefaultValueSql("GETDATE()");
+            });
+
+            modelBuilder.Entity<Payment>(option =>
+            {
+                option.Property(p => p.CreatedAt).HasDefaultValueSql("GETDATE()");
             });
 
             modelBuilder.Entity<Product>(option =>

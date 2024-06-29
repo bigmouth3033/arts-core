@@ -70,6 +70,7 @@ builder.Services.AddTransient<ICartRepository, CartRepository>();
 builder.Services.AddTransient<IAddressRepository, AddressRepository>();
 builder.Services.AddTransient<IReviewRepository, ReviewRepository>();
 builder.Services.AddTransient<IOrderRepository, OrderRepository>();
+builder.Services.AddTransient<IPaymentRepository, PaymentRepository>();
 builder.Services.AddTransient<ISeed, Seed>();
 
 var app = builder.Build();

@@ -299,7 +299,6 @@ namespace arts_core.Interfaces
                     DeliveryTypeId = paymentRequest.DeliveryTypeId,
                     AddressId = paymentRequest.AddressId,
                     ShipFee = paymentRequest.DeliveryTypeId == 1 ? 5 : 3,
-                    IsCancel = false,
                 };
 
                 _context.Payments.Add(payment);

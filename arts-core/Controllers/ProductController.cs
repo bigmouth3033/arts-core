@@ -45,6 +45,7 @@ namespace arts_core.Controllers
 
             return Ok(customResult);
         }
+
         [HttpGet]
         [Route("admin")]
         public async Task<IActionResult> GetProductAdmin([FromQuery] int id)
