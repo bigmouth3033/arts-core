@@ -1,5 +1,7 @@
 using arts_core.Data;
 using arts_core.Interfaces;
+using arts_core.Service;
+using arts_core.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -61,7 +63,8 @@ builder.Services.AddDbContext<DataContext>(option =>
     option.UseSqlServer(builder.Configuration.GetConnectionString("MyConnection"));
 
 });
-
+builder.Services.Configure<MailSetting>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.AddTransient<IMailService, MailService>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<ICategoryRepository, CategoryRepository>();
 builder.Services.AddTransient<ITypeRepository, TypeRepository>();
@@ -71,6 +74,7 @@ builder.Services.AddTransient<IAddressRepository, AddressRepository>();
 builder.Services.AddTransient<IReviewRepository, ReviewRepository>();
 builder.Services.AddTransient<IOrderRepository, OrderRepository>();
 builder.Services.AddTransient<IPaymentRepository, PaymentRepository>();
+builder.Services.AddTransient<IRefundRepository, RefundRepository>();
 builder.Services.AddTransient<ISeed, Seed>();
 
 var app = builder.Build();

@@ -1,8 +1,10 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
 using arts_core.RequestModels;
+using arts_core.Service;
 using Faker;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -47,6 +49,17 @@ namespace arts_core.Interfaces
         Task<CustomResult> ChangeUserImage(string email, IFormFile image);
 
         Task<CustomResult> EditUserInfo(string email, UpdateUserRequest info);
+
+        Task<CustomResult> ActivateEmployee(int userId);
+        Task<CustomResult> DeactivateEmployee(int userId);
+
+        Task<CustomResult> GetEmployee(int userId);
+
+        Task<CustomResult> UpdateEmployee(RequestEmployeeUpdate info);
+
+        Task<CustomResult> SendMail(MailRequest request);
+        Task<CustomResult> VerifyAccount(string email);
+
     }
 
     public class UserRepository : GenericRepository<User>, IUserRepository
@@ -54,11 +67,13 @@ namespace arts_core.Interfaces
         private readonly ILogger<UserRepository> _logger;
         private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _config;
-        public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env) : base(dataContext)
+        private readonly IMailService _mailService;
+        public UserRepository(DataContext dataContext, ILogger<UserRepository> logger, IConfiguration configuration, IWebHostEnvironment env, IMailService mailService) : base(dataContext)
         {
             _logger = logger;
             _config = configuration;
             _env = env;
+            _mailService = mailService;
         }
 
         public void CreateOwner(User owner)
@@ -227,7 +242,6 @@ namespace arts_core.Interfaces
                     {
                         return new CustomResult(400, "Phone number already exist", null);
                     }
-
                 }
 
                 var employeeRole = await _context.Types.SingleOrDefaultAsync(r => r.NameType == "UserRole" && r.Name == "Employee");
@@ -240,6 +254,7 @@ namespace arts_core.Interfaces
                     PhoneNumber = account.Phone,
                     Address = account.Address,
                     RoleType = employeeRole,
+                    Fullname = account.FullName,
                 };
 
                 if (account.Avatar != null)
@@ -315,7 +330,21 @@ namespace arts_core.Interfaces
                 };
 
                 _context.Users.Add(customer);
-                return new CustomResult(200, "success", customer);
+                //return new CustomResult(200, "success", customer);
+
+                var token = CreateToken(customer);
+                var mailRequest = new MailRequest
+                {
+                    ToEmail = customer.Email,
+                    Subject = "Verify Email",
+                    Body = $"<h1>Thank you for registering</h1>" +
+                           $"<p>Please verify your email by clicking the following link: " +
+                           $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"
+                };
+
+                await _mailService.SendEmailAsync(mailRequest);
+
+                return new CustomResult(200, "Account created successfully. Please verify your email.", customer);
             }
             catch (Exception ex)
             {
@@ -431,6 +460,133 @@ namespace arts_core.Interfaces
 
 
 
+        }
+
+        public async Task<CustomResult> ActivateEmployee(int userId)
+        {
+            try
+            {
+                var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+
+                employee.Active = true;
+
+                return new CustomResult(200, "Succes", employee);
+            }catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> DeactivateEmployee(int userId)
+        {
+            try
+            {
+                var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+
+                employee.Active = false;
+
+                return new CustomResult(200, "Succes", employee);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> GetEmployee(int userId)
+        {
+            try
+            {
+                var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+
+                return new CustomResult(200, "Succes", employee);
+            }
+            catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> UpdateEmployee(RequestEmployeeUpdate info)
+        {
+            try
+            {
+                var employee = await _context.Users.SingleOrDefaultAsync(u => u.Email == info.Email);
+
+                if(info.Phone != null && info.Phone != employee.PhoneNumber)
+                {
+                    var verified = await CheckPhoneExist(info.Phone);
+
+                    if(verified == true)
+                    {
+                        return new CustomResult(404, "Phone number exist", info.Phone);
+                    }
+                }
+
+                if (employee != null)
+                {
+                    employee.Password = info.Password != null ? BCrypt.Net.BCrypt.HashPassword(info.Password) : employee.Password;
+                    employee.Address = info.Address;
+                    employee.PhoneNumber = info.Phone;
+                    employee.Fullname = info.FullName;
+
+                    if(info.Avatar != null)
+                    {
+                        var fileName = DateTime.Now.Ticks + info.Avatar.FileName;
+                        var uploadPath = Path.Combine(_env.WebRootPath, "images");
+                        var filePath = Path.Combine(uploadPath, fileName);
+
+                        using var stream = new FileStream(filePath, FileMode.Create);
+                        info.Avatar.CopyTo(stream);
+                        employee.Avatar = fileName;
+                    }
+
+                    _context.Update(employee);
+                    await _context.SaveChangesAsync();
+
+                    return new CustomResult(200, "Success", employee);
+                }
+
+                return new CustomResult(400, "Failed", null);
+
+            }
+            catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", null);
+            }
+        }
+
+        public async Task<CustomResult> VerifyAccount(string email)
+        {
+
+
+            try
+            {
+                var account = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+                account.Verifired = true;
+
+                _context.Users.Update(account);
+
+                return new CustomResult(200, "success", account);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while verifying the account");
+                return new CustomResult(500, "An error occurred", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> SendMail( MailRequest request)
+        {
+            try
+            {
+                await _mailService.SendEmailAsync(request);
+                return new CustomResult(200, "Succesed", request);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(401, "Fail", null);
+            }
         }
     }
 

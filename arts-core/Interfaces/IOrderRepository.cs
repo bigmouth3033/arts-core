@@ -358,6 +358,7 @@ namespace arts_core.Interfaces
 
                 query = query
                        .Include(o => o.User)
+                       .Include(o => o.Refund)
                        .Include(o => o.OrderStatusType)
                        .Include(o => o.Variant)
                            .ThenInclude(v => v.Product)
@@ -444,6 +445,7 @@ namespace arts_core.Interfaces
             try
             {
                 var order = await _context.Orders.Include(o => o.User)
+                        .Include(o => o.Refund)
                        .Include(o => o.OrderStatusType)
                        .Include(o => o.Variant)
                            .ThenInclude(v => v.Product)

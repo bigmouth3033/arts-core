@@ -205,10 +205,10 @@ namespace arts_core.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
 
-                    b.Property<int>("NewOrderId")
+                    b.Property<int?>("NewOrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("OriginalOrderId")
+                    b.Property<int?>("OriginalOrderId")
                         .HasColumnType("int");
 
                     b.Property<string>("ReasonExchange")
@@ -446,10 +446,13 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<float>("AmountRefund")
+                        .HasColumnType("real");
 
-                    b.Property<int>("PaymentId")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("OrderId")
                         .HasColumnType("int");
 
                     b.Property<string>("ReasonRefund")
@@ -462,11 +465,13 @@ namespace arts_core.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("PaymentId");
+                    b.HasIndex("OrderId")
+                        .IsUnique();
 
                     b.ToTable("Refunds");
                 });
@@ -847,15 +852,12 @@ namespace arts_core.Migrations
                 {
                     b.HasOne("arts_core.Models.Order", "NewOrder")
                         .WithMany()
-                        .HasForeignKey("NewOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("NewOrderId");
 
                     b.HasOne("arts_core.Models.Order", "OriginalOrder")
                         .WithMany("Exchanges")
                         .HasForeignKey("OriginalOrderId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("NewOrder");
 
@@ -979,20 +981,12 @@ namespace arts_core.Migrations
             modelBuilder.Entity("arts_core.Models.Refund", b =>
                 {
                     b.HasOne("arts_core.Models.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("arts_core.Models.Payment", "Payment")
-                        .WithMany("Refunds")
-                        .HasForeignKey("PaymentId")
+                        .WithOne("Refund")
+                        .HasForeignKey("arts_core.Models.Refund", "OrderId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Order");
-
-                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("arts_core.Models.Review", b =>
@@ -1084,13 +1078,13 @@ namespace arts_core.Migrations
             modelBuilder.Entity("arts_core.Models.Order", b =>
                 {
                     b.Navigation("Exchanges");
+
+                    b.Navigation("Refund");
                 });
 
             modelBuilder.Entity("arts_core.Models.Payment", b =>
                 {
                     b.Navigation("Orders");
-
-                    b.Navigation("Refunds");
                 });
 
             modelBuilder.Entity("arts_core.Models.Product", b =>

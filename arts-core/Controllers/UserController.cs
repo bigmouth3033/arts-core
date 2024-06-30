@@ -88,5 +88,48 @@ namespace arts_core.Controllers
 
             return Ok(customResult);
         }
+
+        [HttpPost]
+        [Route("activate-employee")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ActivateEmployee([FromForm] int userId)
+        {
+            var customResult = await _unitOfWork.UserRepository.ActivateEmployee(userId);
+            _unitOfWork.SaveChanges();
+
+            return Ok(customResult);
+        }
+
+        [HttpPost]
+        [Route("deactivate-employee")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeactivateEmployee([FromForm] int userId)
+        {
+            var customResult = await _unitOfWork.UserRepository.DeactivateEmployee(userId);
+            _unitOfWork.SaveChanges();
+
+            return Ok(customResult);
+        }
+
+        [HttpGet]
+        [Route("get-a-employee")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetEmployee([FromQuery] int userId)
+        {
+            var customResult = await _unitOfWork.UserRepository.GetEmployee(userId);
+
+            return Ok(customResult);
+        }
+
+        [HttpPut]
+        [Route("update-employee")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateEmployee([FromForm] RequestEmployeeUpdate info)
+        {
+            var customResult = await _unitOfWork.UserRepository.UpdateEmployee(info);
+
+            return Ok(customResult);
+        }
+
     }
 }

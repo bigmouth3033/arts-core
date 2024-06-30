@@ -9,6 +9,9 @@ namespace arts_core.Interfaces
         void SeedProductAndVariantData();
         void SeedUser();
         void SeedVariantAttribute();
+        void SeedAddress();
+        void SeedPayments();
+        void SeedOrders();
     }
 
     public class Seed : ISeed
@@ -87,6 +90,71 @@ namespace arts_core.Interfaces
                 if (variantAttribues == null || variantAttribues.Count == 0)
                     _logger.LogError("user is Null to Seed");
                 _context.VariantAttributes.AddRange(variantAttribues);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong in Seed");
+            }
+        }
+        public void SeedAddress()
+        {
+            try
+            {
+                var rootPath = _env.ContentRootPath;
+                var fullPath = Path.Combine(rootPath, "Data/address.json");
+                var jsonData = System.IO.File.ReadAllText(fullPath);
+                _logger.LogInformation(jsonData);
+                if (string.IsNullOrWhiteSpace(jsonData))
+                    _logger.LogError("Is Null Or WhiteSpace in Seed Address");
+                var addressess = JsonConvert.DeserializeObject<List<Address>>(jsonData);
+                if (addressess == null || addressess.Count == 0)
+                    _logger.LogError("address is Null to Seed");
+                _context.Addresses.AddRange(addressess);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong in Seed");
+            }
+        }
+        public void SeedPayments()
+        {
+            try
+            {
+                var rootPath = _env.ContentRootPath;
+                var fullPath = Path.Combine(rootPath, "Data/payments.json");
+                var jsonData = System.IO.File.ReadAllText(fullPath);
+                _logger.LogInformation(jsonData);
+                if (string.IsNullOrWhiteSpace(jsonData))
+                    _logger.LogError("Is Null Or WhiteSpace in Seed User");
+
+                var payments = JsonConvert.DeserializeObject<List<Payment>>(jsonData);
+                if (payments == null || payments.Count == 0)
+                    _logger.LogError("payments is Null to Seed");
+                _context.Payments.AddRange(payments);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong in Seed");
+            }
+        }
+        public void SeedOrders()
+        {
+            try
+            {
+                var rootPath = _env.ContentRootPath;
+                var fullPath = Path.Combine(rootPath, "Data/orders.json");
+                var jsonData = System.IO.File.ReadAllText(fullPath);
+                _logger.LogInformation(jsonData);
+                if (string.IsNullOrWhiteSpace(jsonData))
+                    _logger.LogError("Is Null Or WhiteSpace in Seed User");
+
+                var orders = JsonConvert.DeserializeObject<List<Order>>(jsonData);
+                if (orders == null || orders.Count == 0)
+                    _logger.LogError("orders is Null to Seed");
+                _context.Orders.AddRange(orders);
                 _context.SaveChanges();
             }
             catch (Exception ex)

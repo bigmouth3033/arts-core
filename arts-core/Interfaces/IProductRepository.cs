@@ -29,6 +29,8 @@ namespace arts_core.Interfaces
         //Paginagion for product listing-page
         public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax);
 
+        //public Task<CustomResult> UpdateProduct(UpdateProduct product);
+
     }
 
     public class ProductRepository : GenericRepository<Product>, IProductRepository
@@ -372,5 +374,83 @@ namespace arts_core.Interfaces
             return customPaging;
 
         }
+
+        //public async Task<CustomResult> UpdateProduct(UpdateProduct product)
+        //{
+        //    if (product.VariantDetailsJSON != null)
+        //    {
+        //        foreach (var json in product.VariantDetailsJSON)
+        //        {
+        //            var detail = JsonConvert.DeserializeObject<VariantDetail>(json);
+        //            product.VariantDetails.Add(detail);
+        //        }
+
+        //        foreach (var json in product.VariantsJSON)
+        //        {
+        //            var variant = JsonConvert.DeserializeObject<RequestModels.Variant>(json);
+        //            product.Variants.Add(variant);
+        //        }
+        //    }
+
+        //    var oldProduct = await _context.Products.SingleOrDefaultAsync(p => p.Id == product.ProductId);
+
+        //    oldProduct.CategoryId = product.Category;
+        //    oldProduct.Name = product.ProductName;
+        //    oldProduct.Description = product.Description;
+        //    oldProduct.IsActive = product.Active;
+        //    oldProduct.WarrantyDuration = product.Warranty;
+        //    oldProduct.Unit = product.Unit;
+        
+        //    if (product.VariantDetails.Count == 0)
+        //    {
+        //        var variant = await _context.Variants.SingleOrDefaultAsync(v => v.ProductId == product.ProductId);
+
+
+        //        variant.Active = true;
+        //        variant.Price = product.Price;
+        //        variant.SalePrice = product.SalePrice;
+        //        variant.Quanity = product.Amount;
+        //        variant.AvailableQuanity = product.Amount;
+
+
+        //        newVariant.Product = newProduct;
+        //        _context.Variants.Add(newVariant);
+        //    }
+
+        //    foreach (dynamic variant in product.VariantDetails)
+        //    {
+        //        var newVariant = new Models.Variant()
+        //        {
+        //            Active = true,
+        //            VariantImage = variant.Image != null ? imageNameList.ToArray()[variant.Image] : null,
+        //            Price = variant.SellPrice,
+        //            SalePrice = variant.ComparePrice,
+        //            Quanity = variant.Inventory,
+        //            AvailableQuanity = variant.Inventory,
+        //        };
+
+
+        //        newVariant.Product = newProduct;
+        //        _context.Variants.Add(newVariant);
+
+
+        //        for (int i = 0; i < product.Variants.Count; i++)
+        //        {
+        //            dynamic option = product.Variants.ToArray()[i];
+        //            var newVariantAttriBute = new VariantAttribute()
+        //            {
+        //                AttributeTypeId = option.Id,
+        //                AttributeValue = variant.Variant[i].Trim(),
+        //                Priority = i + 1
+        //            };
+        //            newVariantAttriBute.Variant = newVariant;
+        //            _context.VariantAttributes.Add(newVariantAttriBute);
+        //        }
+        //    }
+
+        //    _context.Products.Add(newProduct);
+
+        //    return new CustomResult(200, "success", newProduct);
+        //}
     }
 }

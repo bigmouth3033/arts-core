@@ -13,12 +13,11 @@
         public float? TotalPrice { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public Refund? Refund { get; set; }
         public ICollection<Exchange>? Exchanges { get; set; } = null;
         public int PaymentId { get; set; }
         public Payment? Payment { get; set; }
-
         public bool IsCancel { get; set; } = false;
-
         public string? CancelReason {  get; set; }
     }
 }

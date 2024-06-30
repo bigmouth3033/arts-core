@@ -10,15 +10,15 @@ namespace arts_core.RequestModels
 
         public string? Description { get; set; } 
 
-        public int Price {  get; set; }
+        public float Price {  get; set; }
 
-        public int SalePrice { get; set; }
+        public float SalePrice { get; set; }
 
         public string? Unit {  get; set; }
 
         public bool Active{  get; set; }
 
-        public int Warranty { get; set; }
+        public int Warranty { get; set; } = 0;
 
         public int Amount {  get; set; }
 

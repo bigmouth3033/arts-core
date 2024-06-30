@@ -2,9 +2,9 @@
 {
     public class VariantDetail
     {
-        public int SellPrice { get; set; }
+        public float SellPrice { get; set; }
 
-        public int ComparePrice { get; set; }
+        public float ComparePrice { get; set; }
 
         public int? Image {  get; set; }
 
