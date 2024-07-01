@@ -1,5 +1,6 @@
 using arts_core.Data;
 using arts_core.Interfaces;
+using arts_core.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -71,7 +72,9 @@ builder.Services.AddTransient<IAddressRepository, AddressRepository>();
 builder.Services.AddTransient<IReviewRepository, ReviewRepository>();
 builder.Services.AddTransient<IOrderRepository, OrderRepository>();
 builder.Services.AddTransient<IRefundRepository, RefundRepository>();
+builder.Services.AddTransient<IExchangeRepository, ExchangeRepository>();
 builder.Services.AddTransient<ISeed, Seed>();
+builder.Services.AddTransient<IMailService, MailService>();
 
 var app = builder.Build();
 

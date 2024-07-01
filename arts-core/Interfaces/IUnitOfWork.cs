@@ -18,6 +18,7 @@ namespace arts_core.Interfaces
 
         IOrderRepository OrderRepository { get; }
         IRefundRepository RefundRepository { get; }
+        IExchangeRepository ExchangeRepository { get; }
 
         void SaveChanges();
     }
@@ -35,7 +36,7 @@ namespace arts_core.Interfaces
 
         public IOrderRepository OrderRepository { get; set; }
         public IRefundRepository RefundRepository { get; set; }
-
+        public IExchangeRepository ExchangeRepository { get; set; }
         public UnitOfWork(DataContext dataContext, 
             IUserRepository userRepository, 
             ICategoryRepository categoryRepository, 
@@ -45,7 +46,8 @@ namespace arts_core.Interfaces
             IAddressRepository addressRepository, 
             IReviewRepository reviewRepository, 
             IOrderRepository orderRepository, 
-            IRefundRepository refundRepository)
+            IRefundRepository refundRepository,
+            IExchangeRepository exchangeRepository)
         {
             _dataContext = dataContext;
             UserRepository = userRepository;
@@ -57,6 +59,7 @@ namespace arts_core.Interfaces
             ReviewRepository = reviewRepository;
             OrderRepository = orderRepository;
             RefundRepository = refundRepository;
+            ExchangeRepository = exchangeRepository;
         }
 
         public void Dispose()
