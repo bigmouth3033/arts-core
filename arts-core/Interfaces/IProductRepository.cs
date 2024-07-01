@@ -7,6 +7,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Buffers;
 using static System.Net.Mime.MediaTypeNames;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace arts_core.Interfaces
 {
@@ -28,8 +29,9 @@ namespace arts_core.Interfaces
 
         //Paginagion for product listing-page
         public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax);
+        public Task<CustomResult> UpdateProduct(UpdateProduct product);
 
-        //public Task<CustomResult> UpdateProduct(UpdateProduct product);
+        public Task<CustomResult> SearchProduct(string searchValue);
 
     }
 
@@ -309,6 +311,11 @@ namespace arts_core.Interfaces
 
         public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax)
         {
+            /*var list = await _context.Products.Include(p => p.Category).Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).Where(p => p.CategoryId == categoryId).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();*/
+
+
+
+            // Step 1: Filter by Category
             IQueryable<Product> query;
 
             if (categoryId == 0)
@@ -375,82 +382,83 @@ namespace arts_core.Interfaces
 
         }
 
-        //public async Task<CustomResult> UpdateProduct(UpdateProduct product)
-        //{
-        //    if (product.VariantDetailsJSON != null)
-        //    {
-        //        foreach (var json in product.VariantDetailsJSON)
-        //        {
-        //            var detail = JsonConvert.DeserializeObject<VariantDetail>(json);
-        //            product.VariantDetails.Add(detail);
-        //        }
+        public async Task<CustomResult> UpdateProduct(UpdateProduct product)
+        {
 
-        //        foreach (var json in product.VariantsJSON)
-        //        {
-        //            var variant = JsonConvert.DeserializeObject<RequestModels.Variant>(json);
-        //            product.Variants.Add(variant);
-        //        }
-        //    }
+            try
+            {
+                if (product.VariantDetailsJSON != null)
+                {
+                    foreach (var json in product.VariantDetailsJSON)
+                    {
+                        var detail = JsonConvert.DeserializeObject<VariantUpdate>(json);
+                        product.VariantDetails.Add(detail);
+                    }
 
-        //    var oldProduct = await _context.Products.SingleOrDefaultAsync(p => p.Id == product.ProductId);
+                    foreach (var json in product.VariantsJSON)
+                    {
+                        var variant = JsonConvert.DeserializeObject<RequestModels.Variant>(json);
+                        product.Variants.Add(variant);
+                    }
+                }
 
-        //    oldProduct.CategoryId = product.Category;
-        //    oldProduct.Name = product.ProductName;
-        //    oldProduct.Description = product.Description;
-        //    oldProduct.IsActive = product.Active;
-        //    oldProduct.WarrantyDuration = product.Warranty;
-        //    oldProduct.Unit = product.Unit;
-        
-        //    if (product.VariantDetails.Count == 0)
-        //    {
-        //        var variant = await _context.Variants.SingleOrDefaultAsync(v => v.ProductId == product.ProductId);
+                var oldProduct = await _context.Products.SingleOrDefaultAsync(p => p.Id == product.ProductId);
 
+                oldProduct.CategoryId = product.Category;
+                oldProduct.Name = product.ProductName;
+                oldProduct.Description = product.Description;
+                oldProduct.IsActive = product.Active;
+                oldProduct.WarrantyDuration = product.Warranty;
+                oldProduct.Unit = product.Unit;
 
-        //        variant.Active = true;
-        //        variant.Price = product.Price;
-        //        variant.SalePrice = product.SalePrice;
-        //        variant.Quanity = product.Amount;
-        //        variant.AvailableQuanity = product.Amount;
+                if (product.VariantDetails.Count == 0)
+                {
+                    var variant = await _context.Variants.SingleOrDefaultAsync(v => v.ProductId == product.ProductId);
 
+                    variant.Active = true;
+                    variant.Price = product.Price;
+                    variant.SalePrice = product.SalePrice;
+                    variant.Quanity = (variant.AvailableQuanity - variant.Quanity) + product.Amount;
+                    variant.AvailableQuanity = product.Amount;
+                    _context.Variants.Update(variant);
+                }
 
-        //        newVariant.Product = newProduct;
-        //        _context.Variants.Add(newVariant);
-        //    }
+                foreach (VariantUpdate variant in product.VariantDetails)
+                {
+                    var oldvariant = await _context.Variants.SingleOrDefaultAsync(v => v.Id == variant.Id);
 
-        //    foreach (dynamic variant in product.VariantDetails)
-        //    {
-        //        var newVariant = new Models.Variant()
-        //        {
-        //            Active = true,
-        //            VariantImage = variant.Image != null ? imageNameList.ToArray()[variant.Image] : null,
-        //            Price = variant.SellPrice,
-        //            SalePrice = variant.ComparePrice,
-        //            Quanity = variant.Inventory,
-        //            AvailableQuanity = variant.Inventory,
-        //        };
+                    oldvariant.VariantImage = variant.VariantImage;
+                    oldvariant.Price = variant.Price;
+                    oldvariant.SalePrice = variant.SalePrice;
+                    oldvariant.Quanity = (oldvariant.Quanity - oldvariant.AvailableQuanity) + variant.AvailableQuanity;
+                    oldvariant.AvailableQuanity = variant.AvailableQuanity;
 
 
-        //        newVariant.Product = newProduct;
-        //        _context.Variants.Add(newVariant);
+                    _context.Variants.Update(oldvariant);
+                }
 
 
-        //        for (int i = 0; i < product.Variants.Count; i++)
-        //        {
-        //            dynamic option = product.Variants.ToArray()[i];
-        //            var newVariantAttriBute = new VariantAttribute()
-        //            {
-        //                AttributeTypeId = option.Id,
-        //                AttributeValue = variant.Variant[i].Trim(),
-        //                Priority = i + 1
-        //            };
-        //            newVariantAttriBute.Variant = newVariant;
-        //            _context.VariantAttributes.Add(newVariantAttriBute);
-        //        }
-        //    }
 
-        //    _context.Products.Add(newProduct);
+                return new CustomResult(200, "success", null);
+            }
+            catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+          
+        }
 
-        //    return new CustomResult(200, "success", newProduct);
-        //}
+        public async Task<CustomResult> SearchProduct(string searchValue)
+        {
+            try
+            {
+                var products = await _context.Products.Include(p => p.ProductImages).Where(p => p.Name.Contains(searchValue)).ToListAsync();
+                
+                return new CustomResult(200, "Success", products);
+            }catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@
         public string? ReasonExchange { get; set; }
         public string? ResponseExchange { get; set; }
         public DateTime ExchangeDate { get; set; }
+        public DateTime ExchangeUpdateDate { get; set; } = DateTime.Now;
         public string Status { get; set; } = "Pending";
     }
 }

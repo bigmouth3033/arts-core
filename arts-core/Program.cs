@@ -75,6 +75,7 @@ builder.Services.AddTransient<IReviewRepository, ReviewRepository>();
 builder.Services.AddTransient<IOrderRepository, OrderRepository>();
 builder.Services.AddTransient<IPaymentRepository, PaymentRepository>();
 builder.Services.AddTransient<IRefundRepository, RefundRepository>();
+builder.Services.AddTransient<IExchangeRepository, ExchangeRepository>();
 builder.Services.AddTransient<ISeed, Seed>();
 
 var app = builder.Build();

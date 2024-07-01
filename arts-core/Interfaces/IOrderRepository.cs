@@ -35,6 +35,8 @@ namespace arts_core.Interfaces
         Task<CustomResult> GetOrderDetail(int userId, int orderId);
 
         Task<CustomResult> CancelOrder(int userId, int orderId, string reason);
+        
+
 
     }
     public class OrderRepository : GenericRepository<Order>, IOrderRepository

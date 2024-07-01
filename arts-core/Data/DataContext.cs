@@ -1,5 +1,6 @@
 ﻿using arts_core.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata;
 
 namespace arts_core.Data
 {
@@ -28,6 +29,8 @@ namespace arts_core.Data
         public DbSet<Address> Addresses { get; set; }
 
         public DbSet<ReviewImage> ReviewImages { get; set; }
+
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -84,6 +87,8 @@ namespace arts_core.Data
             modelBuilder.Entity<Order>().HasOne(i => i.OrderStatusType).WithMany(p => p.Orders).HasForeignKey(i => i.OrderStatusId).OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Order>().HasOne(o => o.Payment).WithMany(p => p.Orders).HasForeignKey(o => o.PaymentId).OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Order>().HasOne(o => o.Review).WithOne(r => r.Order).HasForeignKey<Order>(o => o.ReviewId).OnDelete(DeleteBehavior.NoAction).IsRequired(false);
 
             modelBuilder.Entity<Event>(option =>
             {

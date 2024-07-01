@@ -41,7 +41,7 @@ namespace arts_core.Service
             }
             builder.HtmlBody = mailRequest.Body;
             email.Body = builder.ToMessageBody();
-            using var smtp = new SmtpClient(); //using MailKit.Net.Smtp;
+            using var smtp = new SmtpClient(); 
             smtp.Connect(_mailSetting.Host, _mailSetting.Port, MailKit.Security.SecureSocketOptions.StartTls);
             smtp.Authenticate(_mailSetting.Email, _mailSetting.Password);
             await smtp.SendAsync(email);

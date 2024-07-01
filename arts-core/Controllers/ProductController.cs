@@ -95,5 +95,28 @@ namespace arts_core.Controllers
 
             return Ok(customPaging);
         }
+
+        [HttpPut]
+        [Route("update-product")]
+        [Authorize(Roles = "Admin, Employee")]
+        public async Task<IActionResult> UpdateProduct([FromForm] UpdateProduct product)
+        {
+            var customResult = await _unitOfWork.ProductRepository.UpdateProduct(product);
+
+            _unitOfWork.SaveChanges();
+
+            return Ok(customResult);
+        }
+
+        [HttpGet]
+        [Route("search-product")]
+        public async Task<IActionResult> SearchProduct([FromQuery] string searchValue)
+        {
+            var customResult = await _unitOfWork.ProductRepository.SearchProduct(searchValue);
+
+
+            return Ok(customResult);
+        }
+
     }
 }

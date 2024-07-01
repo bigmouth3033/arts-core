@@ -9,6 +9,8 @@ namespace arts_core.Interfaces
         Task<IEnumerable<CustomResult>> GetAllReviewProductByUserAsync();
         CustomResult CreateReview(int userId, RequestModels.RequestReview requestRequest);
 
+
+
     }
     public class ReviewRepository : GenericRepository<Review>, IReviewRepository
     {

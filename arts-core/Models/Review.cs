@@ -12,5 +12,7 @@
         public string? Comment { get; set; }
 
         public virtual ICollection<ReviewImage>? ReviewImages { get; set; } = new List<ReviewImage>();
+
+        public virtual Order? Order { get; set; }
     }
 }

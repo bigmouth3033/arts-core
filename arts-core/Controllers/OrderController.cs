@@ -109,7 +109,7 @@ namespace arts_core.Controllers
 
         [HttpGet]
         [Route("get-customer-order-detail")]
-        [Authorize(Roles = "Customer")]
+        [Authorize]
         public async Task<IActionResult> GetCustomerOrder([FromQuery] int orderId)
         {
             int userId;

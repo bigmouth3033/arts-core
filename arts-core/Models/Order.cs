@@ -19,5 +19,8 @@
         public Payment? Payment { get; set; }
         public bool IsCancel { get; set; } = false;
         public string? CancelReason {  get; set; }
+        public int? ReviewId {  get; set; }
+        public Review? Review { get; set; }
+        
     }
 }

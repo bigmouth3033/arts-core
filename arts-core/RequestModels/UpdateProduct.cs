@@ -25,7 +25,7 @@
         public ICollection<object>? Variants { get; set; } = new List<object>();
         public ICollection<string>? VariantsJSON { get; set; }
 
-        public ICollection<VariantDetail>? VariantDetails { get; set; } = new List<VariantDetail>();
+        public ICollection<VariantUpdate>? VariantDetails { get; set; } = new List<VariantUpdate>();
 
         public ICollection<string>? VariantDetailsJSON { get; set; }
     }
