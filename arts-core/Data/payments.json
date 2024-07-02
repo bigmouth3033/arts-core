@@ -1,0 +1,55 @@
+﻿[
+  {
+    "Id": "0",
+    "ShipFee": 5,
+    "PaymentTypeId": "7",
+    "DeliveryTypeId": "1",
+    "IsCancel": false,
+    "AddressId": "2"
+  },
+  {
+    "Id": "0",
+    "ShipFee": 3,
+    "PaymentTypeId": "7",
+    "DeliveryTypeId": "2",
+    "IsCancel": false,
+    "AddressId": "1"
+  },
+  {
+    "Id": "0",
+    "ShipFee": 3,
+    "PaymentTypeId": "7",
+    "DeliveryTypeId": "2",
+    "IsCancel": false,
+    "AddressId": "1"
+  },{
+    "Id": "0",
+    "ShipFee": 5,
+    "PaymentTypeId": "7",
+    "DeliveryTypeId": "1",
+    "IsCancel": false,
+    "AddressId": "1"
+  },{
+    "Id": "0",
+    "ShipFee": 5,
+    "PaymentTypeId": "7",
+    "DeliveryTypeId": "1",
+    "IsCancel": false,
+    "AddressId": "1"
+  },{
+    "Id": "0",
+    "ShipFee": 3,
+    "PaymentTypeId": "7",
+    "DeliveryTypeId": "2",
+    "IsCancel": false,
+    "AddressId": "2"
+  },{
+    "Id": "0",
+    "ShipFee": 3,
+    "PaymentTypeId": "7",
+    "DeliveryTypeId": "2",
+    "IsCancel": false,
+    "AddressId": "2"
+  }
+  
+]

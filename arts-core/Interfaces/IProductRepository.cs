@@ -28,7 +28,7 @@ namespace arts_core.Interfaces
         public Task<CustomResult> DeleteImage(int imageId);
 
         //Paginagion for product listing-page
-        public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax);
+        public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax, int ratingStar);
         public Task<CustomResult> UpdateProduct(UpdateProduct product);
 
         public Task<CustomResult> SearchProduct(string searchValue);
@@ -47,7 +47,7 @@ namespace arts_core.Interfaces
 
         public CustomResult CreateProduct(CreateProduct product)
         {
-            if(product.VariantDetailsJSON != null)
+            if (product.VariantDetailsJSON != null)
             {
                 foreach (var json in product.VariantDetailsJSON)
                 {
@@ -61,7 +61,7 @@ namespace arts_core.Interfaces
                     product.Variants.Add(variant);
                 }
             }
-          
+
 
             var newProduct = new Product()
             {
@@ -94,7 +94,7 @@ namespace arts_core.Interfaces
                 _context.ProductImages.Add(newImage);
             }
 
-            if(product.VariantDetails.Count == 0)
+            if (product.VariantDetails.Count == 0)
             {
                 var newVariant = new Models.Variant()
                 {
@@ -111,7 +111,8 @@ namespace arts_core.Interfaces
 
             foreach (dynamic variant in product.VariantDetails)
             {
-                var newVariant = new Models.Variant() {
+                var newVariant = new Models.Variant()
+                {
                     Active = true,
                     VariantImage = variant.Image != null ? imageNameList.ToArray()[variant.Image] : null,
                     Price = variant.SellPrice,
@@ -150,7 +151,7 @@ namespace arts_core.Interfaces
 
             query = _context.Products;
 
-            if(categoryId.Count() != 0)
+            if (categoryId.Count() != 0)
             {
                 query = query.Where(p => categoryId.Contains(p.CategoryId));
             }
@@ -159,7 +160,7 @@ namespace arts_core.Interfaces
 
             query = query.OrderByDescending(p => p.CreatedAt);
 
-     
+
             query = query.Include(p => p.Category)
                          .Include(p => p.ProductImages)
                          .Include(p => p.Variants)
@@ -170,7 +171,7 @@ namespace arts_core.Interfaces
             query = query.Skip((pageNumber - 1) * pageSize)
                          .Take(pageSize);
 
-      
+
             var list = await query.ToListAsync();
 
             var customPaging = new CustomPaging()
@@ -195,13 +196,14 @@ namespace arts_core.Interfaces
             {
                 var product = await _context.Products.Include(p => p.ProductImages).Include(p => p.Category).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).ThenInclude(p => p.AttributeType).SingleOrDefaultAsync(p => p.Id == id && p.IsActive == true);
 
-                if(product == null)
+                if (product == null)
                 {
-                    return new CustomResult(404, "failed", null); 
+                    return new CustomResult(404, "failed", null);
                 }
 
                 return new CustomResult(200, "success", product);
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new CustomResult(400, "failed", ex.Message);
             }
@@ -216,7 +218,7 @@ namespace arts_core.Interfaces
             {
                 Priority = g.Key.Priority,
                 Variant = g.Key.Name,
-                Values =  RemoveDuplicates(g.Select(va => va.AttributeValue).ToList())
+                Values = RemoveDuplicates(g.Select(va => va.AttributeValue).ToList())
             })
             .ToListAsync();
 
@@ -268,7 +270,7 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "success", listImages);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Bad Request", ex.Message);
             }
@@ -284,7 +286,7 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "success", null);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Bad Request", ex.Message);
             }
@@ -309,7 +311,7 @@ namespace arts_core.Interfaces
             }
         }
 
-        public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax)
+        public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax, int ratingStar)
         {
             /*var list = await _context.Products.Include(p => p.Category).Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).Where(p => p.CategoryId == categoryId).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();*/
 
@@ -334,12 +336,27 @@ namespace arts_core.Interfaces
 
             // Step 3: Include Related Entities
             query = query.Include(p => p.ProductImages)
-                         .Include(p => p.Variants);
+                         .Include(p => p.Variants)
+                         .ThenInclude(p => p.Orders)
+                         .ThenInclude(p => p.Review);
 
             // Step 4: Filter by price range
 
 
             query = query.Where(p => p.Variants.Any(v => v.Price >= priceRangeMin && v.Price <= priceRangeMax));
+
+            ////Step 5: Filter by rating (star)
+
+            if (ratingStar != 0)
+            {
+                query = query.Where(p => p.Variants
+             .Any(v => v.Orders
+             .Where(o => o.ReviewId != null) // Ensure that ReviewId is not null
+             .SelectMany(o => _context.Reviews.Where(r => r.Id == o.ReviewId)) // Select the review object
+             .SelectMany(r => (double?)r.Rating) // Convert rating to nullable double
+             .DefaultIfEmpty() // Handle cases where there are no reviews
+             .Average() >= ratingStar)); // Calculate average rating
+            }
 
 
             // Step 5: Sort
@@ -358,6 +375,13 @@ namespace arts_core.Interfaces
             {
                 query = query.OrderByDescending(p => p.Variants.Min(v => v.Price));
             }
+            //sort Best Seller
+            if (sort == 4)
+            {
+                query = query.OrderByDescending(p => p.Variants.SelectMany(v => v.Orders).Count());
+            }
+
+
 
             // Step 6: Apply Pagination
             var total = query.Count();
@@ -366,6 +390,18 @@ namespace arts_core.Interfaces
 
             // Materialize the query results before using them
             var list = await query.ToListAsync();
+
+           /* // Calculate AverageRating for each Variant
+            foreach (var product in list)
+            {
+                foreach (var variant in product.Variants)
+                {
+                    variant.AverageRating = variant.Orders
+                                         .Where(o => o.Review != null && o.Review.Rating > 0) // Filter out non-positive ratings
+                                         .Average(o => o.Review.Rating) >= ratingStar));
+                }
+            }*/
+
 
             var customPaging = new CustomPaging()
             {
@@ -441,11 +477,11 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "success", null);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }
-          
+
         }
 
         public async Task<CustomResult> SearchProduct(string searchValue)
@@ -453,9 +489,10 @@ namespace arts_core.Interfaces
             try
             {
                 var products = await _context.Products.Include(p => p.ProductImages).Where(p => p.Name.Contains(searchValue)).ToListAsync();
-                
+
                 return new CustomResult(200, "Success", products);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }

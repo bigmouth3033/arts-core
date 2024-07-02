@@ -56,5 +56,23 @@ namespace arts_core.Controllers
             }
             return Ok("");
         }
+        [HttpGet("seedAddress")]
+        public IActionResult SeedAddress()
+        {
+            _seeder.SeedAddress();
+            return Ok("");
+        }
+        [HttpGet("seedPayments")]
+        public IActionResult SeedPayments()
+        {
+            _seeder.SeedPayments();
+            return Ok("");
+        }
+        [HttpGet("seedOrders")]
+        public IActionResult SeedOrders()
+        {
+            _seeder.SeedOrders();
+            return Ok("");
+        }
     }
 }

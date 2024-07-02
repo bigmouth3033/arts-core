@@ -16,5 +16,8 @@
 
         public virtual ICollection<Type>? Types { get; set; }
         public ICollection<User>? Users { get; set; }
+
+        public virtual ICollection<Order>? Orders { get; set; }
+        public double? AverageRating { get; internal set; }
     }
 }

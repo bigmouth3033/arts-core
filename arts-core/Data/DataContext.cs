@@ -90,6 +90,8 @@ namespace arts_core.Data
 
             modelBuilder.Entity<Order>().HasOne(o => o.Review).WithOne(r => r.Order).HasForeignKey<Order>(o => o.ReviewId).OnDelete(DeleteBehavior.NoAction).IsRequired(false);
 
+            modelBuilder.Entity<Order>().HasOne(o => o.Variant).WithMany(p => p.Orders).HasForeignKey(o => o.VariantId).OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<Event>(option =>
             {
                 option.Property(e => e.StartDate).HasDefaultValueSql("GETDATE()");

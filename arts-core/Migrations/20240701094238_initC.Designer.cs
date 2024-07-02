@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using arts_core.Data;
 
@@ -11,9 +12,11 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20240701094238_initC")]
+    partial class initC
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -745,9 +748,6 @@ namespace arts_core.Migrations
 
                     b.Property<int>("AvailableQuanity")
                         .HasColumnType("int");
-
-                    b.Property<double?>("AverageRating")
-                        .HasColumnType("float");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
