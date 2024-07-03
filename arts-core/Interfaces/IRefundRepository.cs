@@ -1,5 +1,6 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
+using arts_core.Service;
 using Microsoft.EntityFrameworkCore;
 
 namespace arts_core.Interfaces
@@ -13,10 +14,12 @@ namespace arts_core.Interfaces
     }
     public class RefundRepository : GenericRepository<Refund>, IRefundRepository
     {
-        private readonly ILogger<CartRepository> _logger;
-        public RefundRepository(ILogger<CartRepository> logger, DataContext dataContext) : base(dataContext)
+        private readonly ILogger<RefundRepository> _logger;
+        private readonly IFileService _fileService;
+        public RefundRepository(ILogger<RefundRepository> logger, IFileService fileService, DataContext dataContext) : base(dataContext)
         {
             _logger = logger;
+            _fileService = fileService;
         }
         public async Task<CustomResult> CreateRefundAsync(RefundRequest request)
         {
@@ -34,8 +37,35 @@ namespace arts_core.Interfaces
                 if (refunds != null)
                     return new CustomResult(402, "Order had been refund before", null);
 
+                //them hin anh neu co
+                var images = new List<StoreImage>();
+                if (request.Images != null)
+                {                  
+                    var imageRoots = await _fileService.StoreImageAsync("Images", request.Images);
+                    foreach (var imageRoot in imageRoots)
+                    {
+                        var imageName = imageRoot;
+                        string entityName = "Refunds";
+                        var storeImage = new StoreImage()
+                        {
+                            EntityName = entityName,
+                            ImageName = imageName
+                        };
+                        images.Add(storeImage);
+                    }
+                    _logger.LogInformation($"filename: {imageRoots}");
+                }
 
-                var refund = new Refund() { OrderId = order.Id, ReasonRefund = request.ReasonRefund, AmountRefund = (float)order.TotalPrice };
+
+                var refund = new Refund()
+                {
+                    OrderId = order.Id,
+                    ReasonRefund = request.ReasonRefund,
+                    AmountRefund = (float)order.TotalPrice,
+                    Images = images
+                };
+
+
                 _context.Refunds.Add(refund);
                 await _context.SaveChangesAsync();
                 return new CustomResult(200, "Your refund has been delivery success", null);
@@ -51,7 +81,12 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var refunds = await _context.Refunds.Include(r => r.Order).OrderByDescending(r => r.CreatedAt).Where(r => r.Order.UserId == userId).ToListAsync();
+                var refunds = await _context.Refunds
+                    .Include(r => r.Order)
+                    .Include(r => r.Images)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Where(r => r.Order.UserId == userId)
+                    .ToListAsync();
 
                 if (refunds.Count == 0)
                     return new CustomResult(400, "Not Found", refunds);
@@ -68,7 +103,10 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var refunds = await _context.Refunds.Include(r => r.Order).OrderByDescending(r => r.CreatedAt).ToListAsync();
+                var refunds = await _context.Refunds
+                   .Include(r => r.Order.Variant)
+                   .Include(r => r.Order.User)
+                   .OrderByDescending(r => r.CreatedAt).ToListAsync();
                 return new CustomResult(200, "Get All Refunds", refunds);
             }
             catch (Exception ex)
@@ -109,22 +147,18 @@ namespace arts_core.Interfaces
         }
 
     }
-    public struct RefundRequest
+    public class RefundRequest
     {
         public int OrderId { get; set; }
         public string ReasonRefund { get; set; } = string.Empty;
-        public RefundRequest(int orderId, string reasonRefund)
-        {
-            OrderId = orderId;
-            ReasonRefund = reasonRefund;
-        }
+        public ICollection<IFormFile>? Images { get; set; }     
     }
-    public struct RefundReQuestForAdmin
+    public class RefundReQuestForAdmin
     {
         public int RefundId { get; set; }
         public string ResponseRefund { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
-        public RefundReQuestForAdmin(int refundId,string responseRefund,string status)
+        public RefundReQuestForAdmin(int refundId, string responseRefund, string status)
         {
             RefundId = refundId;
             ResponseRefund = responseRefund;

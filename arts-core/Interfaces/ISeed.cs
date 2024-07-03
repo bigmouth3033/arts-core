@@ -1,5 +1,6 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace arts_core.Interfaces
@@ -12,6 +13,7 @@ namespace arts_core.Interfaces
         void SeedAddress();
         void SeedPayments();
         void SeedOrders();
+        void SeedReview();
     }
 
     public class Seed : ISeed
@@ -161,6 +163,24 @@ namespace arts_core.Interfaces
             {
                 _logger.LogError(ex, "Something wrong in Seed");
             }
+        }
+        public void SeedReview()
+        {
+            var orders = _context.Orders
+                .Include(o => o.Variant).ThenInclude(v => v.Product)
+                .Include(o => o.User).ToList();
+            foreach (var order in orders)
+            {
+                order.Review = new Review() { 
+                    UserId = order.UserId,
+                    ProductId = order.Variant.ProductId,
+                    Rating = 4, 
+                    Comment = "Oke" };
+            }
+            _context.Orders.UpdateRange(orders);
+            var result =  _context.SaveChanges();
+
+            
         }
     }
 }

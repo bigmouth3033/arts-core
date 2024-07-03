@@ -415,7 +415,10 @@ namespace arts_core.Migrations
                     OrderStatusId = table.Column<int>(type: "int", nullable: false),
                     TotalPrice = table.Column<float>(type: "real", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    PaymentId = table.Column<int>(type: "int", nullable: false)
+                    PaymentId = table.Column<int>(type: "int", nullable: false),
+                    IsCancel = table.Column<bool>(type: "bit", nullable: false),
+                    CancelReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReviewId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -426,6 +429,11 @@ namespace arts_core.Migrations
                         principalTable: "Payments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Orders_Reviews_ReviewId",
+                        column: x => x.ReviewId,
+                        principalTable: "Reviews",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Orders_Types_OrderStatusId",
                         column: x => x.OrderStatusId,
@@ -455,6 +463,7 @@ namespace arts_core.Migrations
                     ReasonExchange = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResponseExchange = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ExchangeDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    ExchangeUpdateDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -482,6 +491,8 @@ namespace arts_core.Migrations
                     ReasonRefund = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResponseRefund = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AmountRefund = table.Column<float>(type: "real", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -492,6 +503,34 @@ namespace arts_core.Migrations
                         column: x => x.OrderId,
                         principalTable: "Orders",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StoreImages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EntityName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ImageName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RefundId = table.Column<int>(type: "int", nullable: true),
+                    ExchangeId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StoreImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StoreImages_Exchanges_ExchangeId",
+                        column: x => x.ExchangeId,
+                        principalTable: "Exchanges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StoreImages_Refunds_RefundId",
+                        column: x => x.RefundId,
+                        principalTable: "Refunds",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
@@ -583,6 +622,13 @@ namespace arts_core.Migrations
                 column: "PaymentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Orders_ReviewId",
+                table: "Orders",
+                column: "ReviewId",
+                unique: true,
+                filter: "[ReviewId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orders_UserId",
                 table: "Orders",
                 column: "UserId");
@@ -649,6 +695,16 @@ namespace arts_core.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_StoreImages_ExchangeId",
+                table: "StoreImages",
+                column: "ExchangeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StoreImages_RefundId",
+                table: "StoreImages",
+                column: "RefundId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TypeVariant_VariantsId",
                 table: "TypeVariant",
                 column: "VariantsId");
@@ -686,9 +742,6 @@ namespace arts_core.Migrations
                 name: "Carts");
 
             migrationBuilder.DropTable(
-                name: "Exchanges");
-
-            migrationBuilder.DropTable(
                 name: "Messages");
 
             migrationBuilder.DropTable(
@@ -698,10 +751,10 @@ namespace arts_core.Migrations
                 name: "ProductImages");
 
             migrationBuilder.DropTable(
-                name: "Refunds");
+                name: "ReviewImages");
 
             migrationBuilder.DropTable(
-                name: "ReviewImages");
+                name: "StoreImages");
 
             migrationBuilder.DropTable(
                 name: "TypeVariant");
@@ -713,13 +766,19 @@ namespace arts_core.Migrations
                 name: "Events");
 
             migrationBuilder.DropTable(
+                name: "Exchanges");
+
+            migrationBuilder.DropTable(
+                name: "Refunds");
+
+            migrationBuilder.DropTable(
                 name: "Orders");
 
             migrationBuilder.DropTable(
-                name: "Reviews");
+                name: "Payments");
 
             migrationBuilder.DropTable(
-                name: "Payments");
+                name: "Reviews");
 
             migrationBuilder.DropTable(
                 name: "Variants");

@@ -28,11 +28,27 @@ namespace arts_core.Data
         public DbSet<Address> Addresses { get; set; }
 
         public DbSet<ReviewImage> ReviewImages { get; set; }
+        public DbSet<StoreImage> StoreImages { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<StoreImage>()
+                .HasOne(si => si.Refund)
+                .WithMany(r => r.Images)
+                .HasForeignKey(si => si.RefundId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+            modelBuilder.Entity<StoreImage>().
+                HasOne(si => si.Exchange)
+                .WithMany(e => e.Images)
+                .HasForeignKey(si => si.ExchangeId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
             modelBuilder.Entity<User>()
                 .HasOne(u => u.RoleType)
                 .WithMany(rt => rt.Users)
@@ -59,7 +75,7 @@ namespace arts_core.Data
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Refund)
-                .WithOne(r => r.Order)                
+                .WithOne(r => r.Order)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Order>()
@@ -116,7 +132,7 @@ namespace arts_core.Data
                 option.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
             });
 
-            
+
 
             modelBuilder.Entity<Models.Type>(option =>
             {

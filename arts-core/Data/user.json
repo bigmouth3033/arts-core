@@ -9,6 +9,7 @@
     "Verifired": "true",
     "CreateAt": "2024-06-14 18:11:11.0333333",
     "UpdatedAt": "2024-06-14 18:11:11.0333333",
+    "RoleTypeId": "6",
     "Active": "true"
   },
   {
@@ -21,6 +22,7 @@
     "Verifired": "true",
     "CreateAt": "2024-06-14 18:11:11.0333333",
     "UpdatedAt": "2024-06-14 18:11:11.0333333",
+    "RoleTypeId": "6",
     "Active": "true"
   },
   {
@@ -33,6 +35,7 @@
     "Verifired": "true",
     "CreateAt": "2024-06-14 18:11:11.0333333",
     "UpdatedAt": "2024-06-14 18:11:11.0333333",
+    "RoleTypeId": "6",
     "Active": "true"
   },
   {
@@ -45,6 +48,7 @@
     "Verifired": "true",
     "CreateAt": "2024-06-14 18:11:11.0333333",
     "UpdatedAt": "2024-06-14 18:11:11.0333333",
+    "RoleTypeId": "6",
     "Active": "true"
   }
 ]

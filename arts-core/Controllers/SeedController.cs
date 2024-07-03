@@ -74,5 +74,11 @@ namespace arts_core.Controllers
             _seeder.SeedOrders();
             return Ok("");
         }
+        [HttpGet("seedReview")]
+        public IActionResult SeedReview()
+        {
+            _seeder.SeedReview();
+            return Ok("");
+        }
     }
 }

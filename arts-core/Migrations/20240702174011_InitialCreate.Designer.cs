@@ -12,8 +12,8 @@ using arts_core.Data;
 namespace arts_core.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240628064836_SecondMigration")]
-    partial class SecondMigration
+    [Migration("20240702174011_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -208,6 +208,9 @@ namespace arts_core.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
 
+                    b.Property<DateTime>("ExchangeUpdateDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("NewOrderId")
                         .HasColumnType("int");
 
@@ -270,10 +273,16 @@ namespace arts_core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CancelReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<bool>("IsCancel")
+                        .HasColumnType("bit");
 
                     b.Property<int>("OrderStatusId")
                         .HasColumnType("int");
@@ -282,6 +291,9 @@ namespace arts_core.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Quanity")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReviewId")
                         .HasColumnType("int");
 
                     b.Property<float?>("TotalPrice")
@@ -298,6 +310,10 @@ namespace arts_core.Migrations
                     b.HasIndex("OrderStatusId");
 
                     b.HasIndex("PaymentId");
+
+                    b.HasIndex("ReviewId")
+                        .IsUnique()
+                        .HasFilter("[ReviewId] IS NOT NULL");
 
                     b.HasIndex("UserId");
 
@@ -455,6 +471,9 @@ namespace arts_core.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId")
@@ -511,6 +530,37 @@ namespace arts_core.Migrations
                     b.HasIndex("ReviewId");
 
                     b.ToTable("ReviewImages");
+                });
+
+            modelBuilder.Entity("arts_core.Models.StoreImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ExchangeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("RefundId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExchangeId");
+
+                    b.HasIndex("RefundId");
+
+                    b.ToTable("StoreImages");
                 });
 
             modelBuilder.Entity("arts_core.Models.Type", b =>
@@ -876,6 +926,10 @@ namespace arts_core.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("arts_core.Models.Review", "Review")
+                        .WithOne("Order")
+                        .HasForeignKey("arts_core.Models.Order", "ReviewId");
+
                     b.HasOne("arts_core.Models.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
@@ -891,6 +945,8 @@ namespace arts_core.Migrations
                     b.Navigation("OrderStatusType");
 
                     b.Navigation("Payment");
+
+                    b.Navigation("Review");
 
                     b.Navigation("User");
 
@@ -1006,6 +1062,23 @@ namespace arts_core.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("arts_core.Models.StoreImage", b =>
+                {
+                    b.HasOne("arts_core.Models.Exchange", "Exchange")
+                        .WithMany("Images")
+                        .HasForeignKey("ExchangeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("arts_core.Models.Refund", "Refund")
+                        .WithMany("Images")
+                        .HasForeignKey("RefundId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Exchange");
+
+                    b.Navigation("Refund");
+                });
+
             modelBuilder.Entity("arts_core.Models.User", b =>
                 {
                     b.HasOne("arts_core.Models.Type", "RestrictedType")
@@ -1062,6 +1135,11 @@ namespace arts_core.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Exchange", b =>
+                {
+                    b.Navigation("Images");
+                });
+
             modelBuilder.Entity("arts_core.Models.Order", b =>
                 {
                     b.Navigation("Exchanges");
@@ -1081,8 +1159,15 @@ namespace arts_core.Migrations
                     b.Navigation("Variants");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Refund", b =>
+                {
+                    b.Navigation("Images");
+                });
+
             modelBuilder.Entity("arts_core.Models.Review", b =>
                 {
+                    b.Navigation("Order");
+
                     b.Navigation("ReviewImages");
                 });
 

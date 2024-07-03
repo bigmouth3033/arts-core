@@ -75,6 +75,7 @@ builder.Services.AddTransient<IRefundRepository, RefundRepository>();
 builder.Services.AddTransient<IExchangeRepository, ExchangeRepository>();
 builder.Services.AddTransient<ISeed, Seed>();
 builder.Services.AddTransient<IMailService, MailService>();
+builder.Services.AddTransient<IFileService  , FileService>();
 
 var app = builder.Build();
 

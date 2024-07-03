@@ -1,5 +1,6 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
+using arts_core.Service;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,12 +11,14 @@ namespace arts_core.Interfaces
         Task<CustomResult> CreateExchangeAsync(ExchangeRequest request);
         Task<CustomResult> UpdateExchangeAsync(UpdateExchangeRequest request);
     }
-    public class ExchangeRepository : GenericRepository<Exchange>,IExchangeRepository
+    public class ExchangeRepository : GenericRepository<Exchange>, IExchangeRepository
     {
         private readonly ILogger<ExchangeRepository> _logger;
-        public ExchangeRepository(ILogger<ExchangeRepository> logger,DataContext dataContext):base(dataContext)
+        private readonly IFileService _fileService;
+        public ExchangeRepository(ILogger<ExchangeRepository> logger, IFileService fileService, DataContext dataContext) : base(dataContext)
         {
-            _logger  = logger;
+            _logger = logger;
+            _fileService = fileService;
         }
 
         public async Task<CustomResult> CreateExchangeAsync(ExchangeRequest request)
@@ -25,18 +28,41 @@ namespace arts_core.Interfaces
                 //kiem tra order da tung refund hoac exchange chua
                 var order = await _context.Orders
                     .Include(od => od.Refund)
-                    .Include(od =>od.Exchanges)
+                    .Include(od => od.Exchanges)
                     .FirstOrDefaultAsync(od => od.Id == request.OriginalOrderId);
 
-                if(order.Exchanges.Count > 0  || order.Refund != null)                
+                if (order.Exchanges.Count > 0 || order.Refund != null)
                     return new CustomResult(400, "Order has been exchanged or refund before", null);
-                
+
+                //them hin anh neu co
+                var images = new List<StoreImage>();
+                if (request.Images != null)
+                {
+                    var imageRoots = await _fileService.StoreImageAsync("Images", request.Images);
+                    foreach (var imageRoot in imageRoots)
+                    {
+                        var imageName = imageRoot;
+                        string entityName = "Exchanges";
+                        var storeImage = new StoreImage()
+                        {
+                            EntityName = entityName,
+                            ImageName = imageName
+                        };
+                        images.Add(storeImage);
+                    }
+                    _logger.LogInformation($"filename: {imageRoots}");
+                }
 
 
-                var exchange = new Exchange() { OriginalOrderId = request.OriginalOrderId,ReasonExchange = request.ReasonExchange};
-                  _context.Exchanges.Add(exchange);
+                var exchange = new Exchange()
+                {
+                    OriginalOrderId = request.OriginalOrderId,
+                    ReasonExchange = request.ReasonExchange,
+                    Images = images,
+                };
+                _context.Exchanges.Add(exchange);
                 await _context.SaveChangesAsync();
-                return new CustomResult(200, "Exchange has been delivered",null);
+                return new CustomResult(200, "Exchange has been delivered", null);
             }
             catch (Exception ex)
             {
@@ -54,7 +80,7 @@ namespace arts_core.Interfaces
                 if (exchange.Status == "Success" || exchange.Status == "Denied")
                     return new CustomResult(402, "Cannot Update Exchange again", null);
 
-                if(request.Status == "Denied")
+                if (request.Status == "Denied")
                 {
                     exchange.ResponseExchange = request.ResponseExchange;
                     exchange.Status = request.Status;
@@ -65,10 +91,10 @@ namespace arts_core.Interfaces
                 }
 
                 //tao order bang order cu
-                var oldOrderExchange  = await _context.Orders.FirstOrDefaultAsync(o => o.Id == exchange.OriginalOrderId);
+                var oldOrderExchange = await _context.Orders.FirstOrDefaultAsync(o => o.Id == exchange.OriginalOrderId);
                 var newOrderExchange = new Order()
                 {
-                    Id= 0,
+                    Id = 0,
                     UserId = oldOrderExchange.UserId,
                     VariantId = oldOrderExchange.VariantId,
                     Quanity = oldOrderExchange.Quanity,
@@ -77,7 +103,7 @@ namespace arts_core.Interfaces
                     CreatedAt = DateTime.Now,
                     PaymentId = oldOrderExchange.PaymentId
                 };
-               
+
 
                 exchange.NewOrder = newOrderExchange;
                 exchange.ResponseExchange = request.ResponseExchange;
@@ -93,7 +119,7 @@ namespace arts_core.Interfaces
                 _context.Variants.Update(variant);
                 _context.Exchanges.Update(exchange);
                 await _context.SaveChangesAsync();
-                transaction.Commit();   
+                transaction.Commit();
             }
             catch (Exception ex)
             {
@@ -107,7 +133,8 @@ namespace arts_core.Interfaces
     public class ExchangeRequest
     {
         public int OriginalOrderId { get; set; }
-        public string ReasonExchange { get; set; } = string.Empty;        
+        public string ReasonExchange { get; set; } = string.Empty;
+        public ICollection<IFormFile>? Images { get; set; }
     }
     public class UpdateExchangeRequest
     {
