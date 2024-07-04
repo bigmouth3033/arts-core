@@ -80,5 +80,39 @@ namespace arts_core.Controllers
             _seeder.SeedReview();
             return Ok("");
         }
+        [HttpGet("test")]
+        public IActionResult Test(string jsonUrl, int categoryId, string imageUrl)
+        {
+            //_seeder.SeedProductOfCategory("dollsProducts.json", 4,"Dolls");
+            _seeder.SeedProductOfCategory(jsonUrl, categoryId, imageUrl);
+            return Ok("");
+        }
+
+        [HttpGet("seeduser")]
+        public async Task<IActionResult> SeedDataForUser()
+        {
+            try
+            {
+                await _seeder.SeedUsersGiu();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "something wrong in seedController");
+            }
+            return Ok("Ok");
+        }
+        [HttpGet("seedordersgiu")]
+        public async Task<IActionResult> SeesOrders()
+        {
+            try
+            {
+                await _seeder.SeedOrderGiu();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "something wrong in seedController");
+            }
+            return Ok("Ok");
+        }
     }
 }

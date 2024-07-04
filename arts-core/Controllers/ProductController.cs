@@ -55,7 +55,6 @@ namespace arts_core.Controllers
             return Ok(customResult);
         }
 
-
         [HttpGet]
         [Route("product-variant")]
         public async Task<IActionResult> GetProductVariantDetail([FromQuery] int id)
@@ -89,9 +88,9 @@ namespace arts_core.Controllers
 
         [HttpGet]
         [Route("listing-page")]
-        public async Task<IActionResult> GetPagingProductForListingPage([FromQuery] int categoryId, [FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] int sort, [FromQuery] string searchValue = "", [FromQuery] float priceRangeMin = 0, [FromQuery] float priceRangeMax = float.MaxValue)
+        public async Task<IActionResult> GetPagingProductForListingPage([FromQuery] int categoryId, [FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] int sort, [FromQuery] string searchValue = "", [FromQuery] float priceRangeMin = 0, [FromQuery] float priceRangeMax = float.MaxValue, [FromQuery] int ratingStar = 0)
         {
-            var customPaging = await _unitOfWork.ProductRepository.GetPagingProductForListingPage(categoryId, pageNumber, pageSize, sort, searchValue, priceRangeMin, priceRangeMax);
+            var customPaging = await _unitOfWork.ProductRepository.GetPagingProductForListingPage(categoryId, pageNumber, pageSize, sort, searchValue, priceRangeMin, priceRangeMax, ratingStar);
 
             return Ok(customPaging);
         }
@@ -123,8 +122,6 @@ namespace arts_core.Controllers
         public async Task<IActionResult> GetNewst()
         {
             var customResult = await _unitOfWork.ProductRepository.GetNewestProduct();
-
-
             return Ok(customResult);
         }
 
@@ -133,8 +130,6 @@ namespace arts_core.Controllers
         public async Task<IActionResult> GetBestSeller()
         {
             var customResult = await _unitOfWork.ProductRepository.GetBestSellect();
-
-
             return Ok(customResult);
         }
 
@@ -144,6 +139,14 @@ namespace arts_core.Controllers
         {
             var customPaging = await _unitOfWork.ProductRepository.GetProductSuggestion(pageNumber,pageSize);
 
+            return Ok(customPaging);
+        }
+
+        [HttpGet]
+        [Route("category-suggestion")]
+        public async Task<IActionResult> GetSuggestion([FromQuery] int categoryId, [FromQuery] int excludedId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
+        {
+            var customPaging = await _unitOfWork.ProductRepository.GetRelatedProduct( categoryId,  excludedId,  pageNumber,  pageSize);
 
             return Ok(customPaging);
         }

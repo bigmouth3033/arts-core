@@ -30,7 +30,8 @@ namespace arts_core.Interfaces
         public Task<CustomResult> DeleteImage(int imageId);
 
         //Paginagion for product listing-page
-        public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax);
+        public Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax, int ratingStar);
+
         public Task<CustomResult> UpdateProduct(UpdateProduct product);
 
         public Task<CustomResult> SearchProduct(string searchValue);
@@ -38,8 +39,10 @@ namespace arts_core.Interfaces
         public Task<CustomResult> GetNewestProduct();
 
         public Task<CustomResult> GetBestSellect();
-
+        
         public Task<CustomPaging> GetProductSuggestion(int pageNumber, int pageSize);
+
+        public Task<CustomPaging> GetRelatedProduct(int categoryId, int excludedId ,int pageNumber, int pageSize);
 
     }
 
@@ -201,7 +204,7 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var product = await _context.Products.Include(p => p.ProductImages).Include(p => p.Category).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).ThenInclude(p => p.AttributeType).SingleOrDefaultAsync(p => p.Id == id && p.IsActive == true);
+                var product = await _context.Products.Include(p => p.ProductImages).Include(p => p.Category).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).ThenInclude(p => p.AttributeType).AsNoTracking().SingleOrDefaultAsync(p => p.Id == id && p.IsActive == true);
 
                 if(product == null)
                 {
@@ -219,7 +222,7 @@ namespace arts_core.Interfaces
         {
             var variants = await _context.Variants.Where(v => v.ProductId == id).Select(v => v.Id).ToListAsync();
 
-            var variantAttributes = await _context.VariantAttributes.Include(v => v.AttributeType).Where(v => variants.Contains(v.VariantId)).GroupBy(va => new { va.Priority, va.AttributeType.Name })
+            var variantAttributes = await _context.VariantAttributes.Include(v => v.AttributeType).AsNoTracking().Where(v => variants.Contains(v.VariantId)).GroupBy(va => new { va.Priority, va.AttributeType.Name })
             .Select(g => new
             {
                 Priority = g.Key.Priority,
@@ -317,82 +320,7 @@ namespace arts_core.Interfaces
             }
         }
 
-        public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax)
-        {
-            /*var list = await _context.Products.Include(p => p.Category).Include(p => p.ProductImages).Include(p => p.Variants).ThenInclude(p => p.VariantAttributes).Where(p => p.CategoryId == categoryId).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();*/
-
-
-
-            // Step 1: Filter by Category
-            IQueryable<Product> query;
-
-            if (categoryId == 0)
-            {
-                query = _context.Products;
-            }
-            else
-            {
-                query = _context.Products
-                                .Where(p => p.CategoryId == categoryId);
-            }
-
-
-            //Step 2: Search
-            query = query.Where(p => p.Name.Contains(searchValue));
-
-            // Step 3: Include Related Entities
-            query = query.Include(p => p.ProductImages)
-                         .Include(p => p.Variants);
-                          
-
-            // Step 4: Filter by price range
-
-
-            query = query.Where(p => p.Variants.Any(v => v.Price >= priceRangeMin && v.Price <= priceRangeMax));
-
-
-            // Step 5: Sort
-            if (sort == 1)
-            {
-                query = query.OrderByDescending(p => p.CreatedAt);
-            }
-            //sort Low to High price(Min Price (base on Variant) of A Product)
-            if (sort == 2)
-            {
-                query = query.OrderBy(p => p.Variants.Min(v => v.Price));
-            }
-
-            //sort High to Low price
-            if (sort == 3)
-            {
-                query = query.OrderByDescending(p => p.Variants.Min(v => v.Price));
-            }
-
-      
-           
-            
-            // Step 6: Apply Pagination
-            var total = query.Count();
-            query = query.Skip((pageNumber - 1) * pageSize)
-                         .Take(pageSize);
-
-            // Materialize the query results before using them
-            var list = await query.ToListAsync();
-
-            var customPaging = new CustomPaging()
-            {
-                Status = 200,
-                Message = "OK",
-                CurrentPage = pageNumber,
-                TotalPages = (int)Math.Ceiling((double)total / pageSize),
-                PageSize = pageSize,
-                TotalCount = total,
-                Data = list
-            };
-
-            return customPaging;
-
-        }
+        
 
         public async Task<CustomResult> UpdateProduct(UpdateProduct product)
         {
@@ -464,9 +392,30 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var products = await _context.Products.Include(p => p.ProductImages).Where(p => p.Name.Contains(searchValue)).ToListAsync();
+                var productsWithRatings = await _context.Products
+                    .AsNoTracking()
+                    .Include(p => p.ProductImages)
+                    .Include(p => p.Variants)
+                    .ThenInclude(v => v.Orders)
+                    .ThenInclude(o => o.Review)
+                    .Select(p => new ProductWithRating
+                    {
+                        Product = p,
+                        AverageRating = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Where(o => o.Review != null)
+                            .Average(o => (double?)o.Review.Rating) ?? 0.0,
+                        RatingCount = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Count(o => o.Review != null)
+                    })
+                    .Where(p => p.Product.Name.Contains(searchValue))
+                    .OrderByDescending(p => p.Product.Id)
+                    .AsSingleQuery()
+                    .Take(5)
+                    .ToListAsync();
                 
-                return new CustomResult(200, "Success", products);
+                return new CustomResult(200, "Success", productsWithRatings);
             }catch(Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
@@ -478,9 +427,11 @@ namespace arts_core.Interfaces
             try
             {
                 var productsWithRatings = await _context.Products
+                   .AsNoTracking()
                    .Include(p => p.ProductImages)
                    .Include(p => p.Variants)
-                   .AsNoTracking()
+                    .ThenInclude(v => v.Orders)
+                    .ThenInclude(o => o.Review)
                    .Select(p => new ProductWithRating
                    {
                        Product = p,
@@ -493,6 +444,8 @@ namespace arts_core.Interfaces
                            .Count(o => o.Review != null)
                    })
                    .OrderByDescending(p => p.Product.CreatedAt)
+                   .ThenBy(p => p.Product.Id)
+                   .AsSingleQuery() // Ensure single query mode  
                    .Take(24)
                    .ToListAsync();
 
@@ -509,9 +462,11 @@ namespace arts_core.Interfaces
             try
             {
                 var productsWithRatings = await _context.Products
+                    .AsNoTracking()
                     .Include(p => p.ProductImages)
                     .Include(p => p.Variants)
-                    .AsNoTracking()
+                    .ThenInclude(v => v.Orders)
+                    .ThenInclude(o => o.Review)
                     .Select(p => new ProductWithRating
                     {
                         Product = p,
@@ -524,6 +479,8 @@ namespace arts_core.Interfaces
                             .Count(o => o.Review != null)
                     })
                     .OrderByDescending(p => p.Product.Variants.SelectMany(v => v.Orders).Count())
+                    .ThenBy(p => p.Product.Id)
+                     .AsSingleQuery() // Ensure single query mode
                     .Take(20)
                     .ToListAsync();
 
@@ -535,18 +492,16 @@ namespace arts_core.Interfaces
             }
         }
 
-
-
         public async Task<CustomPaging> GetProductSuggestion(int pageNumber, int pageSize)
         {
             try
             {
-                IQueryable<ProductWithRating> query;
-
-                query = _context.Products
+                var query = _context.Products
+                    .AsNoTracking()
                     .Include(p => p.ProductImages)
                     .Include(p => p.Variants)
-                    .AsNoTracking()
+                    .ThenInclude(v => v.Orders)
+                    .ThenInclude(o => o.Review)
                     .Select(p => new ProductWithRating
                     {
                         Product = p,
@@ -558,13 +513,15 @@ namespace arts_core.Interfaces
                             .SelectMany(v => v.Orders)
                             .Count(o => o.Review != null)
                     })
-                    .OrderByDescending(p => p.AverageRating);
+                    .OrderByDescending(p => p.AverageRating)
+                    .ThenBy(p => p.Product.Id) // Ensure a consistent order
+                    .AsSingleQuery() // Ensure single query mode
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize);
 
-                var total = await query.CountAsync();
+                var list = await query.ToListAsync();
 
-                var list = await query.Skip((pageNumber - 1) * pageSize)
-                                      .Take(pageSize)
-                                      .ToListAsync();
+                var total = await _context.Products.CountAsync();
 
                 var customPaging = new CustomPaging()
                 {
@@ -581,12 +538,10 @@ namespace arts_core.Interfaces
             }
             catch (Exception ex)
             {
-                // Log the exception (ex) if necessary
-
                 return new CustomPaging()
                 {
-                    Status = 500, // Use a more appropriate status code for errors
-                    Message = ex.Message, // Include the error message for debugging
+                    Status = 500,
+                    Message = ex.Message,
                     CurrentPage = pageNumber,
                     TotalPages = 0,
                     PageSize = pageSize,
@@ -596,6 +551,168 @@ namespace arts_core.Interfaces
             }
         }
 
+        public async Task<CustomPaging> GetRelatedProduct(int categoryId, int excludedId, int pageNumber, int pageSize)
+        {
+            try
+            {
+                var query = _context.Products
+                    .AsNoTracking()
+                    .Include(p => p.ProductImages)
+                    .Include(p => p.Variants)
+                    .ThenInclude(v => v.Orders)
+                    .ThenInclude(o => o.Review)
+                    .Where(q => q.CategoryId == categoryId && q.Id != excludedId)
+                    .Select(p => new ProductWithRating
+                    {
+                        Product = p,
+                        AverageRating = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Where(o => o.Review != null)
+                            .Average(o => (double?)o.Review.Rating) ?? 0.0,
+                        RatingCount = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Count(o => o.Review != null)
+                    })
+                    .OrderByDescending(p => p.AverageRating)
+                    .ThenBy(p => p.Product.Id) // Ensure a consistent order
+                    .AsSingleQuery() // Ensure single query mode
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize);
+
+                var list = await query.ToListAsync();
+
+                var total = await _context.Products.CountAsync();
+
+                var customPaging = new CustomPaging()
+                {
+                    Status = 200,
+                    Message = "OK",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)total / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = total,
+                    Data = list
+                };
+
+                return customPaging;
+            }
+            catch (Exception ex)
+            {
+                return new CustomPaging()
+                {
+                    Status = 500,
+                    Message = ex.Message,
+                    CurrentPage = pageNumber,
+                    TotalPages = 0,
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    Data = null
+                };
+            }
+        }
+
+        public async Task<CustomPaging> GetPagingProductForListingPage(int categoryId, int pageNumber, int pageSize, int sort, string searchValue, float priceRangeMin, float priceRangeMax, int ratingStar)
+        {
+            // Step 1: Filter by Category
+            IQueryable<Product> query;
+
+            if (categoryId == 0)
+            {
+                query = _context.Products;
+            }
+            else
+            {
+                query = _context.Products
+                                .Where(p => p.CategoryId == categoryId);
+            }
+
+
+            //Step 2: Search
+            query = query.Where(p => p.Name.Contains(searchValue));
+
+            // Step 3: Include Related Entities
+            query = query.Include(p => p.ProductImages)
+                         .Include(p => p.Variants)
+                         .ThenInclude(p => p.Orders)
+                         .ThenInclude(p => p.Review);
+
+            // Step 4: Filter by price range
+
+
+            query = query.Where(p => p.Variants.Any(v => v.Price >= priceRangeMin && v.Price <= priceRangeMax));
+
+            ////Step 5: Filter by rating (star)
+
+            //if (ratingStar != 0)
+            //{
+            //    query = query.Where(p => p.Variants
+            // .Any(v => v.Orders
+            // .Where(o => o.ReviewId != null) // Ensure that ReviewId is not null
+            // .SelectMany(o => _context.Reviews.Where(r => r.Id == o.ReviewId)) // Select the review object
+            // .SelectMany(r => (double?)r.Rating) // Convert rating to nullable double
+            // .DefaultIfEmpty() // Handle cases where there are no reviews
+            // .Average() >= ratingStar)); // Calculate average rating
+            //}
+
+
+            // Step 5: Sort
+            if (sort == 1)
+            {
+                query = query.OrderByDescending(p => p.CreatedAt);
+            }
+            //sort Low to High price(Min Price (base on Variant) of A Product)
+            if (sort == 2)
+            {
+                query = query.OrderBy(p => p.Variants.Min(v => v.Price));
+            }
+
+            //sort High to Low price
+            if (sort == 3)
+            {
+                query = query.OrderByDescending(p => p.Variants.Min(v => v.Price));
+            }
+            //sort Best Seller
+            if (sort == 4)
+            {
+                query = query.OrderByDescending(p => p.Variants.SelectMany(v => v.Orders).Count());
+            }
+
+
+
+            // Step 6: Apply Pagination
+            var total = query.Count();
+            query = query.Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize);
+
+            // Materialize the query results before using them
+            var list = await query.ToListAsync();
+
+            /* // Calculate AverageRating for each Variant
+             foreach (var product in list)
+             {
+                 foreach (var variant in product.Variants)
+                 {
+                     variant.AverageRating = variant.Orders
+                                          .Where(o => o.Review != null && o.Review.Rating > 0) // Filter out non-positive ratings
+                                          .Average(o => o.Review.Rating) >= ratingStar));
+                 }
+             }*/
+
+
+            var customPaging = new CustomPaging()
+            {
+                Status = 200,
+                Message = "OK",
+                CurrentPage = pageNumber,
+                TotalPages = (int)Math.Ceiling((double)total / pageSize),
+                PageSize = pageSize,
+                TotalCount = total,
+                Data = list
+            };
+
+            return customPaging;
+
+        }
 
         public class ProductWithRating
         {

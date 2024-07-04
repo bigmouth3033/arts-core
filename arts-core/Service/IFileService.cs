@@ -1,12 +1,12 @@
-﻿
+﻿using System.IO;
 
 namespace arts_core.Service
 {
     public interface IFileService
     {
         Task<List<string>> StoreImageAsync(string storePath, ICollection<IFormFile> files);
+        List<string> GetFilesName(string folderPath);
     }
-
     public class FileService : IFileService
     {
         private readonly IWebHostEnvironment _env;
@@ -15,6 +15,17 @@ namespace arts_core.Service
         {
             _env = env;
             _logger = logger;
+        }
+
+        public List<string> GetFilesName(string folderPath)
+        {
+            var filesName = new List<string>();
+            var files = System.IO.Directory.GetFiles(folderPath);
+            foreach (var file in files)
+            {
+                filesName.Add(Path.GetFileName(file));
+            }
+            return filesName;
         }
 
         public async Task<List<string>> StoreImageAsync(string storePath, ICollection<IFormFile> files)
