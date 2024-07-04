@@ -24,11 +24,51 @@ namespace arts_core.Controllers
             int userId;
             int.TryParse(idClaim, out userId);
 
-            var reviewResult = _unitOfWork.ReviewRepository.CreateReview(userId, review);
+            var reviewResult = await _unitOfWork.ReviewRepository.CreateReview(userId, review);
 
             _unitOfWork.SaveChanges();
 
             return Ok(reviewResult);
+        }
+        [HttpGet]
+        [Route("checkReview")]
+        [Authorize]
+        public async Task<IActionResult> CheckReview(int productId)
+        {
+            string idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+            int userId;
+            int.TryParse(idClaim, out userId);
+            var checkReview = await _unitOfWork.ReviewRepository.CheckReview(userId, productId);
+
+            return Ok(checkReview);
+        }
+        [HttpGet]
+        [Route("allReview")]
+        public async Task<IActionResult> GetAllReview([FromQuery] int productId, [FromQuery] int pageNumber, [FromQuery] int pageSize, int star)
+        {
+            var listReview = await _unitOfWork.ReviewRepository.GetAllReviewProductAsync(productId, pageNumber, pageSize, star);
+            return Ok(listReview);
+        }
+        [HttpGet]
+        [Route("totalStar")]
+        public async Task<IActionResult> TotalStar(int productId)
+        {
+            var totalStar = await _unitOfWork.ReviewRepository.TotalStar(productId);
+            return Ok(totalStar);
+        }
+
+        [HttpGet]
+        [Route("get-all-review-user")]
+        [Authorize]
+
+        public async Task<IActionResult> GetAllRatingByUser()
+        {
+            string idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+            int userId;
+            int.TryParse(idClaim, out userId);
+
+            var reviews = await _unitOfWork.ReviewRepository.GetAllReviewProductByUserAsync(userId);
+            return Ok(reviews);
         }
 
     }

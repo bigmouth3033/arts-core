@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -18,7 +19,7 @@ namespace arts_core.Interfaces
          string paymentCode,
           List<string> delivery,
           string from,
-         string to);
+         string to, string fromDate, string toDate);
 
         Task<CustomResult> AcceptOrder(ICollection<int> orderId);
 
@@ -35,6 +36,10 @@ namespace arts_core.Interfaces
         Task<CustomResult> GetOrderDetail(int userId, int orderId);
 
         Task<CustomResult> CancelOrder(int userId, int orderId, string reason);
+
+        Task<CustomPaging> GetOrderRefund(int pageNumber, int pageSize, string active);
+
+        Task<CustomPaging> GetOrderExchage(int pageNumber, int pageSize, string active);
         
 
 
@@ -118,9 +123,15 @@ namespace arts_core.Interfaces
                         return new CustomResult(400, "current status is not accepted", null);
                     }
 
+                    var variant = await _context.Variants.SingleOrDefaultAsync(v => v.Id == order.VariantId);
+
+                    variant.Quanity -= order.Quanity;
+
                     order.OrderStatusId = 17;
+
                     order.UpdatedAt = DateTime.Now;
                     _context.Orders.Update(order);
+                    _context.Variants.Update(variant);
                 }
 
                 await _context.SaveChangesAsync();
@@ -166,7 +177,7 @@ namespace arts_core.Interfaces
             }
         }
 
-        public async Task<CustomPaging> GetAllOrderAdmin(int pageNumber, int pageSize, string active, string orderId, string customer, List<string> category,string productCode,List<string> payment,string paymentCode,List<string> delivery,string from,string to)
+        public async Task<CustomPaging> GetAllOrderAdmin(int pageNumber, int pageSize, string active, string orderId, string customer, List<string> category,string productCode,List<string> payment,string paymentCode,List<string> delivery,string from,string to, string fromDate, string toDate)
         {
             try
             {
@@ -277,6 +288,20 @@ namespace arts_core.Interfaces
                     query = query.Where(q => q.TotalPrice <= toValue);
                 }
 
+                if(fromDate != "")
+                {
+                    var date = DateTime.Parse(fromDate).Date;
+
+                    query = query.Where(q => q.UpdatedAt.Date >= date);
+                }
+
+                if(toDate != "")
+                {
+                    var date = DateTime.Parse(toDate).Date;
+
+                    query = query.Where(q => q.UpdatedAt.Date <= date);
+                }
+
 
                 var total = query.Count();
 
@@ -361,6 +386,8 @@ namespace arts_core.Interfaces
                 query = query
                        .Include(o => o.User)
                        .Include(o => o.Refund)
+                       .Include(o => o.Exchange)
+                       .Include(o => o.NewOrderExchange)
                        .Include(o => o.OrderStatusType)
                        .Include(o => o.Variant)
                            .ThenInclude(v => v.Product)
@@ -374,10 +401,7 @@ namespace arts_core.Interfaces
                        .Include(o => o.Payment)
                             .ThenInclude(p => p.Address)
                             .AsNoTracking();
-
-                var total = query.Count();
-
-               
+   
                 long orderId;
                 bool success = long.TryParse(search, out orderId);
 
@@ -404,7 +428,7 @@ namespace arts_core.Interfaces
                     query = query.Where(o => o.Variant.Product.Name.Contains(search));
                 }
 
-                
+                var total = query.Count();
 
                 query = query.OrderByDescending(o => o.UpdatedAt);
 
@@ -448,6 +472,8 @@ namespace arts_core.Interfaces
             {
                 var order = await _context.Orders.Include(o => o.User)
                         .Include(o => o.Refund)
+                        .Include(o => o.NewOrderExchange)
+                        .Include(o => o.Exchange)
                        .Include(o => o.OrderStatusType)
                        .Include(o => o.Variant)
                            .ThenInclude(v => v.Product)
@@ -472,6 +498,167 @@ namespace arts_core.Interfaces
             }catch(Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomPaging> GetOrderExchage(int pageNumber, int pageSize, string active)
+        {
+            try
+            {
+                IQueryable<Order> query;
+
+                query = _context.Orders.Include(o => o.User)
+                        .Include(o => o.Exchange)
+                        .Include(o => o.NewOrderExchange)
+                       .Include(o => o.OrderStatusType)
+                       .Include(o => o.Variant)
+                           .ThenInclude(v => v.Product)
+                           .ThenInclude(v => v.Category)
+                        .Include(o => o.Variant)
+                           .ThenInclude(v => v.Product)
+                           .ThenInclude(p => p.ProductImages)
+                       .Include(o => o.Variant)
+                           .ThenInclude(v => v.VariantAttributes)
+                       .Include(o => o.Payment)
+                            .ThenInclude(p => p.PaymentType)
+                       .Include(o => o.Payment)
+                            .ThenInclude(p => p.DeliveryType)
+                       .Include(o => o.Payment)
+                            .ThenInclude(p => p.Address).AsNoTracking();
+
+                query = query.Where(o => o.Exchange != null || o.NewOrderExchange != null);
+
+                if (active == "Pending")
+                {
+                    query = query.Where(o => o.Exchange.Status == "Pending");
+                }
+
+                if (active == "Success")
+                {
+                    query = query.Where(o => o.Exchange.Status == "Success" || o.NewOrderExchange.Status == "Success");
+                }
+
+                if (active == "Denied")
+                {
+                    query = query.Where(o => o.Exchange.Status == "Denied");
+                }
+
+                var total = query.Count();
+
+                query = query.OrderByDescending(o => o.UpdatedAt);
+             
+
+
+                query = query.Skip((pageNumber - 1) * pageSize)
+                      .Take(pageSize);
+
+                var list = await query.ToListAsync();
+
+                var customPaging = new CustomPaging()
+                {
+                    Status = 200,
+                    Message = "OK",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)total / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = total,
+                    Data = list
+                };
+
+                return customPaging;
+
+            }
+            catch (Exception ex)
+            {
+                return new CustomPaging()
+                {
+                    Status = 400,
+                    Message = "Failed",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)0 / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    Data = ex.Message
+                };
+            }
+        }
+
+        public async Task<CustomPaging> GetOrderRefund(int pageNumber, int pageSize, string active)
+        {
+            try
+            {
+                IQueryable<Order> query;
+
+                query = _context.Orders.Include(o => o.User)
+                        .Include(o => o.Refund)
+                       .Include(o => o.OrderStatusType)
+                       .Include(o => o.Variant)
+                           .ThenInclude(v => v.Product)
+                           .ThenInclude(v => v.Category)
+                        .Include(o => o.Variant)
+                           .ThenInclude(v => v.Product)
+                           .ThenInclude(p => p.ProductImages)
+                       .Include(o => o.Variant)
+                           .ThenInclude(v => v.VariantAttributes)
+                       .Include(o => o.Payment)
+                            .ThenInclude(p => p.PaymentType)
+                       .Include(o => o.Payment)
+                            .ThenInclude(p => p.DeliveryType)
+                       .Include(o => o.Payment)
+                            .ThenInclude(p => p.Address).AsNoTracking();
+
+                query = query.Where(o => o.Refund != null);
+
+                if(active == "Pending")
+                {
+                    query = query.Where(o => o.Refund.Status == "Pending");
+                }
+
+                if(active == "Success")
+                {
+                    query = query.Where(o => o.Refund.Status == "Success");
+                }
+
+                if (active == "Denied")
+                {
+                    query = query.Where(o => o.Refund.Status == "Denied");
+                }
+
+                var total = query.Count();
+
+                query = query.OrderByDescending(o => o.Refund.CreatedAt);
+
+                query = query.Skip((pageNumber - 1) * pageSize)
+                      .Take(pageSize);
+
+                var list = await query.ToListAsync();
+
+                var customPaging = new CustomPaging()
+                {
+                    Status = 200,
+                    Message = "OK",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)total / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = total,
+                    Data = list
+                };
+
+                return customPaging;
+
+            }
+            catch(Exception ex)
+            {
+                return new CustomPaging()
+                {
+                    Status = 400,
+                    Message = "Failed",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)0 / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    Data = ex.Message
+                };
             }
         }
 
@@ -525,12 +712,8 @@ namespace arts_core.Interfaces
 
                     order.OrderStatusId = 16;
 
-                    var variant = await _context.Variants.SingleOrDefaultAsync(v => v.Id == order.VariantId);
-
-                    variant.Quanity -= order.Quanity;
+                  
                     order.UpdatedAt = DateTime.Now;
-
-                    _context.Variants.Update(variant);
                     _context.Orders.Update(order);
                 }
 

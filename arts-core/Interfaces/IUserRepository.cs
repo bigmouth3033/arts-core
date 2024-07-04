@@ -57,7 +57,7 @@ namespace arts_core.Interfaces
 
         Task<CustomResult> UpdateEmployee(RequestEmployeeUpdate info);
 
-        Task<CustomResult> SendMail(MailRequest request);
+        Task<CustomResult> SendMail(RequestModels.MailRequest request);
         Task<CustomResult> VerifyAccount(string email);
 
     }

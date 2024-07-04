@@ -29,6 +29,7 @@ namespace arts_core.Data
         public DbSet<Address> Addresses { get; set; }
 
         public DbSet<ReviewImage> ReviewImages { get; set; }
+        public DbSet<StoreImage> StoreImages { get; set; }
 
 
 
@@ -42,6 +43,20 @@ namespace arts_core.Data
                 .HasForeignKey(u => u.RoleTypeId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<StoreImage>()
+             .HasOne(si => si.Refund)
+             .WithMany(r => r.Images)
+             .HasForeignKey(si => si.RefundId)
+             .OnDelete(DeleteBehavior.Cascade)
+             .IsRequired(false);
+
+            modelBuilder.Entity<StoreImage>().
+                HasOne(si => si.Exchange)
+                .WithMany(e => e.Images)
+                .HasForeignKey(si => si.ExchangeId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
             modelBuilder.Entity<Payment>()
                 .HasOne(p => p.PaymentType)
                 .WithMany(t => t.Payments)
@@ -54,11 +69,7 @@ namespace arts_core.Data
                .HasForeignKey(p => p.DeliveryTypeId)
                .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<Exchange>()
-                .HasOne(e => e.OriginalOrder)
-                .WithMany(o => o.Exchanges)
-                .HasForeignKey(e => e.OriginalOrderId)
-                .OnDelete(DeleteBehavior.NoAction);
+           
 
             modelBuilder.Entity<Order>()
                .HasOne(o => o.Refund)
@@ -89,6 +100,18 @@ namespace arts_core.Data
             modelBuilder.Entity<Order>().HasOne(o => o.Payment).WithMany(p => p.Orders).HasForeignKey(o => o.PaymentId).OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Order>().HasOne(o => o.Review).WithOne(r => r.Order).HasForeignKey<Order>(o => o.ReviewId).OnDelete(DeleteBehavior.NoAction).IsRequired(false);
+
+            modelBuilder.Entity<Exchange>()
+            .HasOne(e => e.OriginalOrder)
+            .WithOne(o => o.Exchange)
+            .HasForeignKey<Exchange>(e => e.OriginalOrderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Exchange>()
+                .HasOne(e => e.NewOrder)
+                .WithOne(o => o.NewOrderExchange)
+                .HasForeignKey<Exchange>(e => e.NewOrderId)
+                .OnDelete(DeleteBehavior.Restrict).IsRequired(false);
 
             modelBuilder.Entity<Event>(option =>
             {

@@ -118,5 +118,35 @@ namespace arts_core.Controllers
             return Ok(customResult);
         }
 
+        [HttpGet]
+        [Route("get-newest")]
+        public async Task<IActionResult> GetNewst()
+        {
+            var customResult = await _unitOfWork.ProductRepository.GetNewestProduct();
+
+
+            return Ok(customResult);
+        }
+
+        [HttpGet]
+        [Route("get-best-seller")]
+        public async Task<IActionResult> GetBestSeller()
+        {
+            var customResult = await _unitOfWork.ProductRepository.GetBestSellect();
+
+
+            return Ok(customResult);
+        }
+
+        [HttpGet]
+        [Route("get-suggestion")]
+        public async Task<IActionResult> GetSuggestion([FromQuery] int pageNumber, [FromQuery] int pageSize)
+        {
+            var customPaging = await _unitOfWork.ProductRepository.GetProductSuggestion(pageNumber,pageSize);
+
+
+            return Ok(customPaging);
+        }
+
     }
 }

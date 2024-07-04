@@ -3,19 +3,22 @@ using arts_core.Setting;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using MimeKit.Text;
 
 namespace arts_core.Service
 {
     public class MailService : IMailService
     {
         private readonly MailSetting _mailSetting;
+        private readonly IConfiguration _configuration;
 
-        public MailService(IOptions<MailSetting> mailSetting)
+        public MailService(IOptions<MailSetting> mailSetting, IConfiguration configuration)
         {
             //IOption: doc json tu appsetting.json, parse vao model
             _mailSetting = mailSetting.Value;
+            _configuration = configuration;
         }
-
+            
         public async Task SendEmailAsync(MailRequest mailRequest)
         {
             var email = new MimeMessage();
@@ -48,5 +51,40 @@ namespace arts_core.Service
             smtp.Disconnect(true);
         }
 
+        public void SendMail(MailRequestNhan request)
+        {
+            var Host = _configuration.GetSection("MailSettings:Host").Value;
+            var Port = _configuration.GetSection("MailSettings:Port").Value;
+            var MailFrom = _configuration.GetSection("MailSettings:Mail").Value;
+            var Password = _configuration.GetSection("MailSettings:Password").Value;
+            var DisplayName = _configuration.GetSection("MailSettings:DisplayName").Value;
+
+
+            var email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse(MailFrom));
+            email.To.Add(MailboxAddress.Parse(request.To));
+            email.Subject = request.Subject;
+            email.Body = new TextPart(TextFormat.Html) { Text = request.Body };
+
+            using var smtp = new SmtpClient();
+            smtp.Connect(Host, 587, MailKit.Security.SecureSocketOptions.StartTls);
+            smtp.Authenticate(MailFrom, Password);
+            smtp.Send(email);
+            smtp.Disconnect(true);
+        } 
+    }
+
+
+    public class MailRequestNhan
+    {
+        public string To { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public string Body { get; set; } = string.Empty;
+        public MailRequestNhan(string to, string subject, string body)
+        {
+            To = to;
+            Subject = subject;
+            Body = body;
+        }
     }
 }

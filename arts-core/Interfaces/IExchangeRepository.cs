@@ -1,5 +1,6 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
+using arts_core.Service;
 using Microsoft.EntityFrameworkCore;
 
 namespace arts_core.Interfaces
@@ -8,14 +9,18 @@ namespace arts_core.Interfaces
     {
         Task<CustomResult> CreateExchangeAsync(ExchangeRequest request);
         Task<CustomResult> UpdateExchangeAsync(UpdateExchangeRequest request);
+
+        Task<CustomResult> GetExchangeById(int exchangeId);
     }
 
     public class ExchangeRepository : GenericRepository<Exchange>, IExchangeRepository
     {
         private readonly ILogger<ExchangeRepository> _logger;
-        public ExchangeRepository(ILogger<ExchangeRepository> logger, DataContext dataContext) : base(dataContext)
+        private readonly IFileService _fileService;
+        public ExchangeRepository(ILogger<ExchangeRepository> logger, DataContext dataContext, IFileService fileService) : base(dataContext)
         {
             _logger = logger;
+            _fileService = fileService;
         }
 
         public async Task<CustomResult> CreateExchangeAsync(ExchangeRequest request)
@@ -25,15 +30,39 @@ namespace arts_core.Interfaces
                 //kiem tra order da tung refund hoac exchange chua
                 var order = await _context.Orders
                     .Include(od => od.Refund)
-                    .Include(od => od.Exchanges)
+                    .Include(od => od.Exchange)
                     .FirstOrDefaultAsync(od => od.Id == request.OriginalOrderId);
 
-                if (order.Exchanges.Count > 0 || order.Refund != null)
+                if ( order.Refund != null)
                     return new CustomResult(400, "Order has been exchanged or refund before", null);
 
+                var images = new List<StoreImage>();
+                if (request.Images != null)
+                {
+                    var imageRoots = await _fileService.StoreImageAsync("Images", request.Images);
+                    foreach (var imageRoot in imageRoots)
+                    {
+                        var imageName = imageRoot;
+                        string entityName = "Refunds";
+                        var storeImage = new StoreImage()
+                        {
+                            EntityName = entityName,
+                            ImageName = imageName
+                        };
+                        images.Add(storeImage);
+                    }
+                    _logger.LogInformation($"filename: {imageRoots}");
+                }
 
+                order.UpdatedAt = DateTime.Now;
 
-                var exchange = new Exchange() { OriginalOrderId = request.OriginalOrderId, ReasonExchange = request.ReasonExchange };
+                _context.Orders.Update(order);
+
+                var exchange = new Exchange() { 
+                    OriginalOrderId = request.OriginalOrderId,
+                    ReasonExchange = request.ReasonExchange,
+                    Images = images
+                };
                 _context.Exchanges.Add(exchange);
                 await _context.SaveChangesAsync();
                 return new CustomResult(200, "Exchange has been delivered", null);
@@ -44,6 +73,20 @@ namespace arts_core.Interfaces
                 throw;
             }
         }
+
+        public async Task<CustomResult> GetExchangeById(int exchangeId)
+        {
+            try
+            {
+                var exchange = await _context.Exchanges.Include(e => e.Images).SingleOrDefaultAsync(e => e.Id == exchangeId);
+
+                return new CustomResult(200, "Success", exchange);
+            }catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
         public async Task<CustomResult> UpdateExchangeAsync(UpdateExchangeRequest request)
         {
             using var transaction = _context.Database.BeginTransaction();
@@ -72,9 +115,10 @@ namespace arts_core.Interfaces
                     UserId = oldOrderExchange.UserId,
                     VariantId = oldOrderExchange.VariantId,
                     Quanity = oldOrderExchange.Quanity,
-                    OrderStatusId = oldOrderExchange.OrderStatusId,
+                    OrderStatusId = 17,
                     TotalPrice = oldOrderExchange.TotalPrice,
                     CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
                     PaymentId = oldOrderExchange.PaymentId
                 };
 
@@ -88,7 +132,7 @@ namespace arts_core.Interfaces
                 variant.AvailableQuanity -= newOrderExchange.Quanity;
 
                 if (variant.AvailableQuanity < 0 || variant.AvailableQuanity < 0)
-                    return new CustomResult(401, $"Quanity of variant {variant.Id} lower than 0 please update variant before Exchange", null);
+                    return new CustomResult(401, $"Quanity of this product lower than 0 please update variant before Exchange", null);
 
                 _context.Variants.Update(variant);
                 _context.Exchanges.Update(exchange);
@@ -108,11 +152,12 @@ namespace arts_core.Interfaces
     {
         public int OriginalOrderId { get; set; }
         public string ReasonExchange { get; set; } = string.Empty;
+        public ICollection<IFormFile>? Images { get; set; }
     }
     public class UpdateExchangeRequest
     {
         public int ExchangeId { get; set; }
-        public string ResponseExchange { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
+        public string? ResponseExchange { get; set; }
+        public string? Status { get; set; }
     }
 }

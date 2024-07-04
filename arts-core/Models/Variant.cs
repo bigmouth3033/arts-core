@@ -12,9 +12,12 @@
         public float SalePrice { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; } = true;
-        public virtual ICollection<VariantAttribute>? VariantAttributes { get; set; }
 
+        public virtual ICollection<Order>? Orders { get; set; }
+        public virtual ICollection<VariantAttribute>? VariantAttributes { get; set; }
         public virtual ICollection<Type>? Types { get; set; }
         public ICollection<User>? Users { get; set; }
+
+ 
     }
 }

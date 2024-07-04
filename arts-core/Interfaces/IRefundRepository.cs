@@ -1,5 +1,6 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
+using arts_core.Service;
 using Microsoft.EntityFrameworkCore;
 
 namespace arts_core.Interfaces
@@ -10,13 +11,17 @@ namespace arts_core.Interfaces
         Task<CustomResult> GetRefundsByUserIdAsync(int userId);
         Task<CustomResult> GetAllRefundsAsync();
         Task<CustomResult> UpdateRefundAsync(RefundReQuestForAdmin request);
+        Task<CustomResult> GetRefundById(int refundId);
+
     }
     public class RefundRepository : GenericRepository<Refund>, IRefundRepository
     {
         private readonly ILogger<CartRepository> _logger;
-        public RefundRepository(ILogger<CartRepository> logger, DataContext dataContext) : base(dataContext)
+        private readonly IFileService _fileService;
+        public RefundRepository(ILogger<CartRepository> logger, DataContext dataContext, IFileService fileService) : base(dataContext)
         {
             _logger = logger;
+            _fileService = fileService;
         }
         public async Task<CustomResult> CreateRefundAsync(RefundRequest request)
         {
@@ -34,9 +39,35 @@ namespace arts_core.Interfaces
                 if (refunds != null)
                     return new CustomResult(402, "Order had been refund before", null);
 
+                var images = new List<StoreImage>();
+                if (request.Images != null)
+                {
+                    var imageRoots = await _fileService.StoreImageAsync("Images", request.Images);
+                    foreach (var imageRoot in imageRoots)
+                    {
+                        var imageName = imageRoot;
+                        string entityName = "Refunds";
+                        var storeImage = new StoreImage()
+                        {
+                            EntityName = entityName,
+                            ImageName = imageName
+                        };
+                        images.Add(storeImage);
+                    }
+                    _logger.LogInformation($"filename: {imageRoots}");
+                }
 
-                var refund = new Refund() { OrderId = order.Id, ReasonRefund = request.ReasonRefund, AmountRefund = (float)order.TotalPrice };
+                var refund = new Refund() { 
+                    OrderId = order.Id, 
+                    ReasonRefund = request.ReasonRefund, 
+                    AmountRefund = (float)order.TotalPrice,
+                    Images = images
+                };
+
+
                 _context.Refunds.Add(refund);
+                order.UpdatedAt = DateTime.Now;
+                _context.Orders.Update(order);  
                 await _context.SaveChangesAsync();
                 return new CustomResult(200, "Your refund has been delivery success", null);
             }
@@ -108,27 +139,33 @@ namespace arts_core.Interfaces
             return (DateTime.Now - order.CreatedAt).TotalDays > 7;
         }
 
+        public async Task<CustomResult> GetRefundById(int refundId)
+        {
+            try
+            {
+                var refund = await _context.Refunds.Include(r => r.Images).Include(r => r.Order).SingleOrDefaultAsync(r => r.Id == refundId);
+
+
+                return new CustomResult(200, "Success", refund);
+
+            }catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
     }
     public class RefundRequest
     {
         public int OrderId { get; set; }
         public string ReasonRefund { get; set; } = string.Empty;
-        //public RefundRequest(int orderId, string reasonRefund)
-        //{
-        //    OrderId = orderId;
-        //    ReasonRefund = reasonRefund;
-        //}
+        public ICollection<IFormFile>? Images { get; set; }
+
     }
-    public struct RefundReQuestForAdmin
+    public class RefundReQuestForAdmin
     {
         public int RefundId { get; set; }
-        public string ResponseRefund { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public RefundReQuestForAdmin(int refundId, string responseRefund, string status)
-        {
-            RefundId = refundId;
-            ResponseRefund = responseRefund;
-            Status = status;
-        }
+        public string? ResponseRefund { get; set; }
+        public string Status { get; set; }
+   
     }
 }

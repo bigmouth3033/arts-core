@@ -14,13 +14,13 @@
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public Refund? Refund { get; set; }
-        public ICollection<Exchange>? Exchanges { get; set; } = null;
+        public Exchange? Exchange { get; set; }
+        public Exchange? NewOrderExchange { get; set; }
         public int PaymentId { get; set; }
         public Payment? Payment { get; set; }
         public bool IsCancel { get; set; } = false;
         public string? CancelReason {  get; set; }
         public int? ReviewId {  get; set; }
         public Review? Review { get; set; }
-        
     }
 }

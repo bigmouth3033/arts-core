@@ -38,7 +38,11 @@ namespace arts_core.Interfaces
                                 .Include(p => p.Orders)
                                     .ThenInclude(o => o.OrderStatusType)
                                 .Include(p => p.PaymentType)
-                                .Include(p => p.DeliveryType).AsNoTracking();
+                                .Include(p => p.DeliveryType)
+                                .Include(p => p.Orders).ThenInclude(o=>o.Exchange)
+                                .Include(p => p.Orders).ThenInclude(o => o.NewOrderExchange)
+                                .Include(p => p.Orders).ThenInclude(o => o.Refund)
+                                .AsNoTracking();
 
                 var total = query.Count();
 

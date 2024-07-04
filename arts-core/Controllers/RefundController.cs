@@ -25,8 +25,6 @@ namespace arts_core.Controllers
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetRefundsByUserId(int userId)
         {
-
-
             var result = await _unitOfWork.RefundRepository.GetRefundsByUserIdAsync(userId);
             return Ok(result);
         }
@@ -38,9 +36,17 @@ namespace arts_core.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateRefundForAdmin(RefundReQuestForAdmin request)
+        public async Task<IActionResult> UpdateRefundForAdmin([FromForm]RefundReQuestForAdmin request)
         {
             var result = await _unitOfWork.RefundRepository.UpdateRefundAsync(request);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("get-refund")]
+        public async Task<IActionResult> GetRefundById([FromQuery] int refundId)
+        {
+            var result = await _unitOfWork.RefundRepository.GetRefundById(refundId);
             return Ok(result);
         }
     }

@@ -1,15 +1,16 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace arts_core.Interfaces
 {
     public interface IReviewRepository : IRepository<Review>
     {
-        Task<IEnumerable<CustomResult>> GetAllReviewProductAsync();
-        Task<IEnumerable<CustomResult>> GetAllReviewProductByUserAsync();
-        CustomResult CreateReview(int userId, RequestModels.RequestReview requestRequest);
-
-
+        Task<CustomPaging> GetAllReviewProductAsync(int productId, int pageNumber, int pageSize, int star);
+        Task<CustomResult> GetAllReviewProductByUserAsync(int userId);
+        Task<CustomResult> CreateReview(int userId, RequestModels.RequestReview requestRequest);
+        Task<CustomResult> CheckReview(int userId, int productId);
+        Task<CustomResult> TotalStar(int productId);
 
     }
     public class ReviewRepository : GenericRepository<Review>, IReviewRepository
@@ -24,17 +25,39 @@ namespace arts_core.Interfaces
             _env = env;
         }
 
-        public CustomResult CreateReview(int userId, RequestModels.RequestReview requestRequest)
+        public async Task<CustomResult> CheckReview(int userId, int productId)
         {
             try
             {
+                var order = await _context.Orders.Include(v => v.Variant).ThenInclude(p => p.Product).Where(o => o.UserId == userId && o.Variant.Product.Id == productId && o.OrderStatusId == 16 && o.ReviewId == null).Select((o) => o.Id).ToListAsync();
+                return new CustomResult(200, "success", order);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "fail", null);
+
+            }
+        }
+
+        public async Task<CustomResult> CreateReview(int userId, RequestModels.RequestReview requestRequest)
+        {
+            try
+
+            {
+
+
                 var review = new Review()
                 {
                     Comment = requestRequest.Comment,
                     ProductId = requestRequest.ProductId,
                     Rating = requestRequest.Rating,
                     UserId = userId,
+                    CreatedAt = DateTime.UtcNow,
                 };
+                var order = await _context.Orders.SingleOrDefaultAsync(o => o.Id == requestRequest.OrderId);
+
+                order.Review = review;
+                _context.Orders.Update(order);
 
                 if (requestRequest.Images != null)
                 {
@@ -67,15 +90,79 @@ namespace arts_core.Interfaces
 
 
 
-        public Task<IEnumerable<CustomResult>> GetAllReviewProductAsync()
+        public async Task<CustomPaging> GetAllReviewProductAsync(int productId, int pageNumber, int pageSize, int star)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var reviews = _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Include(o => o.User).Include(o => o.ReviewImages).Where(r => r.Order.Variant.ProductId == productId).OrderByDescending(r => r.CreatedAt).AsNoTracking();
+
+                if (star != 0)
+                {
+                    reviews = reviews.Where(r => r.Rating == star);
+                }
+
+                var total = reviews.Count();
+
+                reviews = reviews.Skip((pageNumber - 1) * pageSize)
+                     .Take(pageSize);
+                var list = await reviews.ToListAsync();
+
+                var customPaging = new CustomPaging()
+                {
+                    Status = 200,
+                    Message = "OK",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)total / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = total,
+                    Data = list
+                };
+                return customPaging;
+            }
+            catch (Exception ex)
+            {
+                return new CustomPaging()
+                {
+                    Status = 400,
+                    Message = "Failed",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)0 / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    Data = null
+                };
+
+            }
         }
 
-        public Task<IEnumerable<CustomResult>> GetAllReviewProductByUserAsync()
+        public async Task<CustomResult> GetAllReviewProductByUserAsync(int userId)
         {
-            throw new NotImplementedException();
+
+            try
+            {
+                var reviews = await _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Include(p => p.Product).ThenInclude(p => p.ProductImages).Include(o => o.ReviewImages).Where(u => u.UserId == userId).OrderByDescending(r => r.CreatedAt).AsNoTracking().ToListAsync();
+                return new CustomResult(200, "success", reviews);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "fail", null);
+            }
+        }
+
+        public async Task<CustomResult> TotalStar(int productId)
+        {
+            try
+            {
+                var totalStar = await _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Where(r => r.Order.Variant.ProductId == productId).GroupBy(o => o.Rating).Select(o => new {
+                    star = o.Key,
+                    amount = o.Count(),
+                }).ToListAsync();
+                return new CustomResult(200, "success", totalStar);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "fail", null);
+            }
         }
     }
-
 }

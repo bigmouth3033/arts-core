@@ -226,9 +226,13 @@ namespace arts_core.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NewOrderId");
+                    b.HasIndex("NewOrderId")
+                        .IsUnique()
+                        .HasFilter("[NewOrderId] IS NOT NULL");
 
-                    b.HasIndex("OriginalOrderId");
+                    b.HasIndex("OriginalOrderId")
+                        .IsUnique()
+                        .HasFilter("[OriginalOrderId] IS NOT NULL");
 
                     b.ToTable("Exchanges");
                 });
@@ -497,6 +501,9 @@ namespace arts_core.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
@@ -534,6 +541,37 @@ namespace arts_core.Migrations
                     b.HasIndex("ReviewId");
 
                     b.ToTable("ReviewImages");
+                });
+
+            modelBuilder.Entity("arts_core.Models.StoreImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ExchangeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("RefundId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExchangeId");
+
+                    b.HasIndex("RefundId");
+
+                    b.ToTable("StoreImages");
                 });
 
             modelBuilder.Entity("arts_core.Models.Type", b =>
@@ -861,13 +899,14 @@ namespace arts_core.Migrations
             modelBuilder.Entity("arts_core.Models.Exchange", b =>
                 {
                     b.HasOne("arts_core.Models.Order", "NewOrder")
-                        .WithMany()
-                        .HasForeignKey("NewOrderId");
+                        .WithOne("NewOrderExchange")
+                        .HasForeignKey("arts_core.Models.Exchange", "NewOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("arts_core.Models.Order", "OriginalOrder")
-                        .WithMany("Exchanges")
-                        .HasForeignKey("OriginalOrderId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .WithOne("Exchange")
+                        .HasForeignKey("arts_core.Models.Exchange", "OriginalOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("NewOrder");
 
@@ -911,7 +950,7 @@ namespace arts_core.Migrations
                         .IsRequired();
 
                     b.HasOne("arts_core.Models.Variant", "Variant")
-                        .WithMany()
+                        .WithMany("Orders")
                         .HasForeignKey("VariantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1036,6 +1075,23 @@ namespace arts_core.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("arts_core.Models.StoreImage", b =>
+                {
+                    b.HasOne("arts_core.Models.Exchange", "Exchange")
+                        .WithMany("Images")
+                        .HasForeignKey("ExchangeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("arts_core.Models.Refund", "Refund")
+                        .WithMany("Images")
+                        .HasForeignKey("RefundId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Exchange");
+
+                    b.Navigation("Refund");
+                });
+
             modelBuilder.Entity("arts_core.Models.User", b =>
                 {
                     b.HasOne("arts_core.Models.Type", "RestrictedType")
@@ -1092,9 +1148,16 @@ namespace arts_core.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("arts_core.Models.Exchange", b =>
+                {
+                    b.Navigation("Images");
+                });
+
             modelBuilder.Entity("arts_core.Models.Order", b =>
                 {
-                    b.Navigation("Exchanges");
+                    b.Navigation("Exchange");
+
+                    b.Navigation("NewOrderExchange");
 
                     b.Navigation("Refund");
                 });
@@ -1109,6 +1172,11 @@ namespace arts_core.Migrations
                     b.Navigation("ProductImages");
 
                     b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("arts_core.Models.Refund", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("arts_core.Models.Review", b =>
@@ -1140,6 +1208,8 @@ namespace arts_core.Migrations
 
             modelBuilder.Entity("arts_core.Models.Variant", b =>
                 {
+                    b.Navigation("Orders");
+
                     b.Navigation("VariantAttributes");
                 });
 #pragma warning restore 612, 618

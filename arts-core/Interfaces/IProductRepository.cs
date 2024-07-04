@@ -8,6 +8,8 @@ using System.Buffers;
 using static System.Net.Mime.MediaTypeNames;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace arts_core.Interfaces
 {
@@ -32,6 +34,12 @@ namespace arts_core.Interfaces
         public Task<CustomResult> UpdateProduct(UpdateProduct product);
 
         public Task<CustomResult> SearchProduct(string searchValue);
+
+        public Task<CustomResult> GetNewestProduct();
+
+        public Task<CustomResult> GetBestSellect();
+
+        public Task<CustomPaging> GetProductSuggestion(int pageNumber, int pageSize);
 
     }
 
@@ -335,6 +343,7 @@ namespace arts_core.Interfaces
             // Step 3: Include Related Entities
             query = query.Include(p => p.ProductImages)
                          .Include(p => p.Variants);
+                          
 
             // Step 4: Filter by price range
 
@@ -359,6 +368,9 @@ namespace arts_core.Interfaces
                 query = query.OrderByDescending(p => p.Variants.Min(v => v.Price));
             }
 
+      
+           
+            
             // Step 6: Apply Pagination
             var total = query.Count();
             query = query.Skip((pageNumber - 1) * pageSize)
@@ -459,6 +471,138 @@ namespace arts_core.Interfaces
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }
+        }
+
+        public async Task<CustomResult> GetNewestProduct()
+        {
+            try
+            {
+                var productsWithRatings = await _context.Products
+                   .Include(p => p.ProductImages)
+                   .Include(p => p.Variants)
+                   .AsNoTracking()
+                   .Select(p => new ProductWithRating
+                   {
+                       Product = p,
+                       AverageRating = p.Variants
+                           .SelectMany(v => v.Orders)
+                           .Where(o => o.Review != null)
+                           .Average(o => (double?)o.Review.Rating) ?? 0.0,
+                       RatingCount = p.Variants
+                           .SelectMany(v => v.Orders)
+                           .Count(o => o.Review != null)
+                   })
+                   .OrderByDescending(p => p.Product.CreatedAt)
+                   .Take(24)
+                   .ToListAsync();
+
+                return new CustomResult(200, "Success", productsWithRatings);
+            }catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+
+        public async Task<CustomResult> GetBestSellect()
+        {
+            try
+            {
+                var productsWithRatings = await _context.Products
+                    .Include(p => p.ProductImages)
+                    .Include(p => p.Variants)
+                    .AsNoTracking()
+                    .Select(p => new ProductWithRating
+                    {
+                        Product = p,
+                        AverageRating = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Where(o => o.Review != null)
+                            .Average(o => (double?)o.Review.Rating) ?? 0.0,
+                        RatingCount = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Count(o => o.Review != null)
+                    })
+                    .OrderByDescending(p => p.Product.Variants.SelectMany(v => v.Orders).Count())
+                    .Take(20)
+                    .ToListAsync();
+
+                return new CustomResult(200, "Success", productsWithRatings);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+
+
+        public async Task<CustomPaging> GetProductSuggestion(int pageNumber, int pageSize)
+        {
+            try
+            {
+                IQueryable<ProductWithRating> query;
+
+                query = _context.Products
+                    .Include(p => p.ProductImages)
+                    .Include(p => p.Variants)
+                    .AsNoTracking()
+                    .Select(p => new ProductWithRating
+                    {
+                        Product = p,
+                        AverageRating = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Where(o => o.Review != null)
+                            .Average(o => (double?)o.Review.Rating) ?? 0.0,
+                        RatingCount = p.Variants
+                            .SelectMany(v => v.Orders)
+                            .Count(o => o.Review != null)
+                    })
+                    .OrderByDescending(p => p.AverageRating);
+
+                var total = await query.CountAsync();
+
+                var list = await query.Skip((pageNumber - 1) * pageSize)
+                                      .Take(pageSize)
+                                      .ToListAsync();
+
+                var customPaging = new CustomPaging()
+                {
+                    Status = 200,
+                    Message = "OK",
+                    CurrentPage = pageNumber,
+                    TotalPages = (int)Math.Ceiling((double)total / pageSize),
+                    PageSize = pageSize,
+                    TotalCount = total,
+                    Data = list
+                };
+
+                return customPaging;
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (ex) if necessary
+
+                return new CustomPaging()
+                {
+                    Status = 500, // Use a more appropriate status code for errors
+                    Message = ex.Message, // Include the error message for debugging
+                    CurrentPage = pageNumber,
+                    TotalPages = 0,
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    Data = null
+                };
+            }
+        }
+
+
+        public class ProductWithRating
+        {
+            public Product Product { get; set; }
+            public double AverageRating { get; set; }
+
+            public int RatingCount { get; set; }
         }
     }
 }

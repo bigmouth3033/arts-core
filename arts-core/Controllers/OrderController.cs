@@ -27,7 +27,10 @@ namespace arts_core.Controllers
           [FromQuery] string paymentCode = "",
           [FromQuery] List<string> delivery = null,
           [FromQuery] string from = "",
-          [FromQuery] string to = "")
+          [FromQuery] string to = "",
+          [FromQuery] string fromDate = "",
+          [FromQuery] string toDate = ""
+          )
         {
             var customPaging = await _unitOfWork.OrderRepository.GetAllOrderAdmin(pageNumber, pageSize, active , orderId,
               customer,
@@ -37,7 +40,7 @@ namespace arts_core.Controllers
               paymentCode,
               delivery,
               from,
-              to);
+              to, fromDate,toDate);
 
             return Ok(customPaging);
         }
@@ -135,6 +138,28 @@ namespace arts_core.Controllers
             var customrResult = await _unitOfWork.OrderRepository.CancelOrder(userId, requestCancel.OrderId, requestCancel.Reason);
 
             return Ok(customrResult);
+        }
+
+        [HttpGet]
+        [Route("order-refund")]
+        [Authorize(Roles = "Admin, Employee")]
+        public async Task<IActionResult> GetOrderRefund([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string active)
+        {
+        
+            var customPaging = await _unitOfWork.OrderRepository.GetOrderRefund(pageNumber, pageSize, active);
+
+            return Ok(customPaging);
+        }
+
+        [HttpGet]
+        [Route("exchange")]
+        [Authorize(Roles = "Admin, Employee")]
+        public async Task<IActionResult> GetExchange([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string active)
+        {
+
+            var customPaging = await _unitOfWork.OrderRepository.GetOrderExchage(pageNumber, pageSize, active);
+
+            return Ok(customPaging);
         }
 
     }

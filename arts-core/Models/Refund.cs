@@ -11,5 +11,7 @@
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public float AmountRefund { get; set; }
+        public ICollection<StoreImage>? Images { get; set; }
+
     }
 }

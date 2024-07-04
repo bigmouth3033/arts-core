@@ -12,5 +12,7 @@
         public DateTime ExchangeDate { get; set; }
         public DateTime ExchangeUpdateDate { get; set; } = DateTime.Now;
         public string Status { get; set; } = "Pending";
+        public ICollection<StoreImage>? Images { get; set; }
+
     }
 }
