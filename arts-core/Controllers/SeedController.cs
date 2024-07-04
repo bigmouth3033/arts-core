@@ -29,20 +29,7 @@ namespace arts_core.Controllers
             }
             return Ok("");
         }
-        [HttpGet("seedUsers")]
-        public IActionResult SeedUsers()
-        {
-            try
-            {
-                _seeder.SeedUser();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "something wrong in seedController");
-            }
-            return Ok("");
-        }
-
+  
         [HttpGet("seedVariantAttributes")]
         public IActionResult SeedVariantAttributes()
         {
@@ -55,6 +42,32 @@ namespace arts_core.Controllers
                 _logger.LogError(ex, "something wrong in seedController");
             }
             return Ok("");
+        }
+        [HttpGet("seeduser")]
+        public async Task<IActionResult> SeedDataForUser()
+        {
+            try
+            {
+                 await _seeder.SeedUsers();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "something wrong in seedController");
+            }
+            return Ok("Ok");
+        }
+        [HttpGet("seedorders")]
+        public async Task<IActionResult> SeesOrders()
+        {
+            try
+            {
+                await _seeder.SeedOrders();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "something wrong in seedController");
+            }
+            return Ok("Ok");
         }
     }
 }

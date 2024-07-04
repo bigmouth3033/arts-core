@@ -1,17 +1,25 @@
 ﻿using arts_core.Data;
+using arts_core.Migrations;
 using arts_core.Models;
+using Faker;
+using Microsoft.AspNetCore.Server.IISIntegration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
+using System;
 
 namespace arts_core.Interfaces
 {
     public interface ISeed
     {
         void SeedProductAndVariantData();
-        void SeedUser();
+
         void SeedVariantAttribute();
         void SeedAddress();
         void SeedPayments();
-        void SeedOrders();
+        Task SeedOrders();
+        Task SeedUsers();
+        Task SeedReview();
     }
 
     public class Seed : ISeed
@@ -52,28 +60,7 @@ namespace arts_core.Interfaces
             }
         }
 
-        public void SeedUser()
-        {
-            try
-            {
-                var rootPath = _env.ContentRootPath;
-                var fullPath = Path.Combine(rootPath, "Data/user.json");
-                var jsonData = System.IO.File.ReadAllText(fullPath);
-                _logger.LogInformation(jsonData);
-                if (string.IsNullOrWhiteSpace(jsonData))
-                    _logger.LogError("Is Null Or WhiteSpace in Seed User");
 
-                var users = JsonConvert.DeserializeObject<List<User>>(jsonData);
-                if (users == null || users.Count == 0)
-                    _logger.LogError("user is Null to Seed");
-                _context.Users.AddRange(users);
-                _context.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Something wrong in Seed");
-            }
-        }
 
         public void SeedVariantAttribute()
         {
@@ -107,7 +94,7 @@ namespace arts_core.Interfaces
                 _logger.LogInformation(jsonData);
                 if (string.IsNullOrWhiteSpace(jsonData))
                     _logger.LogError("Is Null Or WhiteSpace in Seed Address");
-                var addressess = JsonConvert.DeserializeObject<List<Address>>(jsonData);
+                var addressess = JsonConvert.DeserializeObject<List<Models.Address>>(jsonData);
                 if (addressess == null || addressess.Count == 0)
                     _logger.LogError("address is Null to Seed");
                 _context.Addresses.AddRange(addressess);
@@ -140,27 +127,115 @@ namespace arts_core.Interfaces
                 _logger.LogError(ex, "Something wrong in Seed");
             }
         }
-        public void SeedOrders()
+        public async Task SeedOrders()
         {
             try
             {
-                var rootPath = _env.ContentRootPath;
-                var fullPath = Path.Combine(rootPath, "Data/orders.json");
-                var jsonData = System.IO.File.ReadAllText(fullPath);
-                _logger.LogInformation(jsonData);
-                if (string.IsNullOrWhiteSpace(jsonData))
-                    _logger.LogError("Is Null Or WhiteSpace in Seed User");
+                var random = new Random();
+                for (int y = 0; y < 20; y++)
+                {
+                    int randomUserId = random.Next(120, 301);
 
-                var orders = JsonConvert.DeserializeObject<List<Order>>(jsonData);
-                if (orders == null || orders.Count == 0)
-                    _logger.LogError("orders is Null to Seed");
-                _context.Orders.AddRange(orders);
-                _context.SaveChanges();
+                    var user = await _context.Users.Where(u => u.Id == randomUserId).SingleOrDefaultAsync();
+
+
+                    for (int i = 0; i < 10; i++)
+                    {
+
+                        int randomVariant = random.Next(1, 29);
+
+                        var variant = await _context.Variants.Where(v => v.Id == randomVariant).SingleOrDefaultAsync();
+                        var quanityVariantOrder = 1;
+                        var addressUser = await _context.Addresses.Where(u => u.UserId == user.Id).Take(1).SingleOrDefaultAsync();
+
+                        var totalPrice = variant?.Price * quanityVariantOrder + 5;
+
+                        if (variant?.Quanity > 0)
+                        {
+                            var payment = new Payment()
+                            {
+                                DeliveryTypeId = 1,
+                                AddressId = addressUser.Id,
+                                PaymentTypeId = 7,
+                                ShipFee = 5,
+
+                            };
+                            var review = new Review()
+                            {
+                                Comment = "pauidfgjkbfi ayuildfgia7urg aeirughethw",
+                                Rating = random.Next(1, 6),
+                                UserId = randomUserId,
+                                ProductId = variant.ProductId,
+                                CreatedAt = DateTime.Now
+
+                            };
+                            var order = new Order()
+                            {
+                                
+                                UserId = randomUserId,
+                                Quanity = quanityVariantOrder,
+                                OrderStatusId = 16,
+                                TotalPrice = totalPrice,
+                                Payment = payment,
+                                VariantId = variant.Id,
+                                Review = review,
+                            };
+                            variant.Quanity = variant.Quanity - quanityVariantOrder;
+                            variant.AvailableQuanity = variant.AvailableQuanity - quanityVariantOrder;
+
+                           
+                            _context.Payments.Add(payment);
+                            _context.Orders.Add(order);
+                            _context.Reviews.Add(review);
+
+                            _context.Variants.Update(variant);
+
+                            await _context.SaveChangesAsync();
+                        }
+
+                    }
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Something wrong in Seed");
             }
+        }
+        public async Task SeedReview()
+        {
+
+        }
+        public async Task SeedUsers()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                var user = new User()
+                {
+                    Email = Faker.Name.First().ToLower() + Faker.Name.Suffix().ToLower() + "@gmail.com",
+                    Fullname = Faker.Name.First(),
+                    Password = "$2a$12$C1JQMjVl3bfXxtISNXv9Sulqsu/nEOx.yhtIozwvUW/DHWevhhQYG",
+                    PhoneNumber = Faker.Phone.Number(),
+                    RoleTypeId = 6,
+                    Address = Faker.Address.StreetAddress(),
+                    Verifired = true,
+
+                };
+                var address = new Models.Address()
+                {
+                    FullName = user.Fullname,
+                    PhoneNumber = user.PhoneNumber,
+                    AddressDetail = Faker.Address.StreetAddress(),
+                    Province = "01",
+                    District = "001",
+                    Ward = "00001",
+                    IsDefault = true,
+                    User = user,
+                };
+                _context.Addresses.Add(address);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+
         }
     }
 }
