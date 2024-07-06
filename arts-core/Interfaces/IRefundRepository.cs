@@ -18,10 +18,12 @@ namespace arts_core.Interfaces
     {
         private readonly ILogger<CartRepository> _logger;
         private readonly IFileService _fileService;
-        public RefundRepository(ILogger<CartRepository> logger, DataContext dataContext, IFileService fileService) : base(dataContext)
+        private readonly IMailService _mailService;
+        public RefundRepository(ILogger<CartRepository> logger, DataContext dataContext, IFileService fileService, IMailService mailService) : base(dataContext)
         {
             _logger = logger;
             _fileService = fileService;
+            _mailService = mailService;
         }
         public async Task<CustomResult> CreateRefundAsync(RefundRequest request)
         {

@@ -29,7 +29,7 @@ namespace arts_core.Interfaces
 
     public class UnitOfWork : IUnitOfWork
     {
-        private DataContext _dataContext;
+        private readonly DataContext _dataContext;
         public IUserRepository UserRepository { get; set; }
         public ICategoryRepository CategoryRepository { get; set; }
         public ITypeRepository TypeRepository { get; set; }

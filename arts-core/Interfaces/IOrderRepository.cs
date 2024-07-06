@@ -96,10 +96,15 @@ namespace arts_core.Interfaces
                     return new CustomResult(400, "Failed", null);
                 }
 
+                var variant = await _context.Variants.SingleOrDefaultAsync(v => v.Id == order.VariantId);
+
+                variant.AvailableQuanity += order.Quanity;
+
                 order.IsCancel = true;
                 order.UpdatedAt = DateTime.Now;
                 order.CancelReason = reason;
                 _context.Orders.Update(order);
+                _context.Variants.Update(variant);
 
                 await _context.SaveChangesAsync();
 

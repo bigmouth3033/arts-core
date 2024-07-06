@@ -1,4 +1,5 @@
 using arts_core.Data;
+using arts_core.Hubs;
 using arts_core.Interfaces;
 using arts_core.Service;
 using arts_core.Setting;
@@ -23,7 +24,7 @@ builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles
 );
 
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddSignalR();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -36,7 +37,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("myAppCors", policy =>
     {
-        policy.WithOrigins(allowOrigin).AllowAnyHeader().AllowAnyMethod();
+        policy.WithOrigins(allowOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
     });
 });
 
@@ -67,6 +68,7 @@ builder.Services.AddDbContext<DataContext>(option =>
 
 });
 builder.Services.Configure<MailSetting>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IMailService, MailService>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<ICategoryRepository, CategoryRepository>();
@@ -82,6 +84,8 @@ builder.Services.AddTransient<IExchangeRepository, ExchangeRepository>();
 builder.Services.AddTransient<ISeed, Seed>();
 builder.Services.AddTransient<IFileService, FileService>();
 
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -92,6 +96,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("myAppCors");
+
+app.MapHub<NotificationHub>("/notification");
 
 app.UseStaticFiles();
 

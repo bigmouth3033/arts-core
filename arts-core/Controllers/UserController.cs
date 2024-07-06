@@ -131,5 +131,16 @@ namespace arts_core.Controllers
             return Ok(customResult);
         }
 
+        [HttpGet]
+        [Route("customer-ids")]
+        [Authorize(Roles = "Admin, Employee")]
+        public async Task<IActionResult> GetCustomerIds()
+        {
+            var customResult = await _unitOfWork.UserRepository.GetAllUserId();
+
+            return Ok(customResult);
+        }
+
+
     }
 }

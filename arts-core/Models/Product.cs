@@ -16,6 +16,8 @@
         public ICollection<Variant>? Variants { get; set; }
         public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
+        public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
       
     }
 }

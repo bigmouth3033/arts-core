@@ -60,6 +60,8 @@ namespace arts_core.Interfaces
         Task<CustomResult> SendMail(RequestModels.MailRequest request);
         Task<CustomResult> VerifyAccount(string email);
 
+        Task<CustomResult> GetAllUserId();
+
     }
 
     public class UserRepository : GenericRepository<User>, IUserRepository
@@ -333,6 +335,8 @@ namespace arts_core.Interfaces
                 //return new CustomResult(200, "success", customer);
 
                 var token = CreateToken(customer);
+
+
                 var mailRequest = new MailRequest
                 {
                     ToEmail = customer.Email,
@@ -341,6 +345,18 @@ namespace arts_core.Interfaces
                            $"<p>Please verify your email by clicking the following link: " +
                            $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"
                 };
+
+                _ = _mailService.SendMail(new MailRequestNhan(customer.Email, "Verify Email",
+                    $"<h1>Thank you for registering</h1>" +
+                           $"<p>Please verify your email by clicking the following link: " +
+                           $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"))
+                .ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        _logger.LogError(t.Exception, "Some Exception in Test");
+                    }
+                });
 
                 await _mailService.SendEmailAsync(mailRequest);
 
@@ -420,7 +436,7 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "Success", user);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }
@@ -453,7 +469,7 @@ namespace arts_core.Interfaces
                 await _context.SaveChangesAsync();
                 return new CustomResult(200, "Success", user);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }
@@ -471,7 +487,8 @@ namespace arts_core.Interfaces
                 employee.Active = true;
 
                 return new CustomResult(200, "Succes", employee);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }
@@ -501,7 +518,7 @@ namespace arts_core.Interfaces
 
                 return new CustomResult(200, "Succes", employee);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }
@@ -513,11 +530,11 @@ namespace arts_core.Interfaces
             {
                 var employee = await _context.Users.SingleOrDefaultAsync(u => u.Email == info.Email);
 
-                if(info.Phone != null && info.Phone != employee.PhoneNumber)
+                if (info.Phone != null && info.Phone != employee.PhoneNumber)
                 {
                     var verified = await CheckPhoneExist(info.Phone);
 
-                    if(verified == true)
+                    if (verified == true)
                     {
                         return new CustomResult(404, "Phone number exist", info.Phone);
                     }
@@ -530,7 +547,7 @@ namespace arts_core.Interfaces
                     employee.PhoneNumber = info.Phone;
                     employee.Fullname = info.FullName;
 
-                    if(info.Avatar != null)
+                    if (info.Avatar != null)
                     {
                         var fileName = DateTime.Now.Ticks + info.Avatar.FileName;
                         var uploadPath = Path.Combine(_env.WebRootPath, "images");
@@ -550,7 +567,7 @@ namespace arts_core.Interfaces
                 return new CustomResult(400, "Failed", null);
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", null);
             }
@@ -576,7 +593,7 @@ namespace arts_core.Interfaces
             }
         }
 
-        public async Task<CustomResult> SendMail( MailRequest request)
+        public async Task<CustomResult> SendMail(MailRequest request)
         {
             try
             {
@@ -586,6 +603,21 @@ namespace arts_core.Interfaces
             catch (Exception ex)
             {
                 return new CustomResult(401, "Fail", null);
+            }
+        }
+
+        public async Task<CustomResult> GetAllUserId()
+        {
+            try
+            {
+                var ids = await _context.Users.Where(u => u.RoleTypeId == 6).Select(u => u.Id).ToListAsync();
+
+                return new CustomResult(200, "Success", ids);
+            }
+            catch (Exception ex)
+            {
+
+                return new CustomResult(400, "Failed", ex.Message);
             }
         }
     }

@@ -4,6 +4,7 @@ using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using MimeKit.Text;
+using System.Diagnostics;
 
 namespace arts_core.Service
 {
@@ -11,14 +12,16 @@ namespace arts_core.Service
     {
         private readonly MailSetting _mailSetting;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<MailService> _logger;
 
-        public MailService(IOptions<MailSetting> mailSetting, IConfiguration configuration)
+        public MailService(IOptions<MailSetting> mailSetting, IConfiguration configuration, ILogger<MailService> logger)
         {
             //IOption: doc json tu appsetting.json, parse vao model
             _mailSetting = mailSetting.Value;
             _configuration = configuration;
+            _logger = logger;
         }
-            
+
         public async Task SendEmailAsync(MailRequest mailRequest)
         {
             var email = new MimeMessage();
@@ -51,11 +54,13 @@ namespace arts_core.Service
             smtp.Disconnect(true);
         }
 
-        public void SendMail(MailRequestNhan request)
+        public async Task<bool> SendMail(MailRequestNhan request)
         {
+            Stopwatch st = new Stopwatch();
+            st.Start();
             var Host = _configuration.GetSection("MailSettings:Host").Value;
             var Port = _configuration.GetSection("MailSettings:Port").Value;
-            var MailFrom = _configuration.GetSection("MailSettings:Mail").Value;
+            var MailFrom = _configuration.GetSection("MailSettings:Email").Value;
             var Password = _configuration.GetSection("MailSettings:Password").Value;
             var DisplayName = _configuration.GetSection("MailSettings:DisplayName").Value;
 
@@ -67,10 +72,13 @@ namespace arts_core.Service
             email.Body = new TextPart(TextFormat.Html) { Text = request.Body };
 
             using var smtp = new SmtpClient();
-            smtp.Connect(Host, 587, MailKit.Security.SecureSocketOptions.StartTls);
-            smtp.Authenticate(MailFrom, Password);
-            smtp.Send(email);
+            await smtp.ConnectAsync(Host, 587, MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(MailFrom, Password);
+            await smtp.SendAsync(email);
             smtp.Disconnect(true);
+            _logger.LogInformation($"{st.ElapsedMilliseconds} ms");
+            st.Stop();
+            return true;
         } 
     }
 

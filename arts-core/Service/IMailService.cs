@@ -7,6 +7,6 @@ namespace arts_core.Service
     {
         Task SendEmailAsync(MailRequest mailrequest);
 
-        void SendMail(MailRequestNhan request);
+        Task<bool> SendMail(MailRequestNhan request);
     }
 }

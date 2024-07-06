@@ -1,4 +1,5 @@
 ﻿using arts_core.Interfaces;
+using arts_core.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,12 @@ namespace arts_core.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<RefundController> _logger;
-        public RefundController(IUnitOfWork unitOfWork, ILogger<RefundController> logger)
+        private readonly IMailService _mailService;
+        public RefundController(IUnitOfWork unitOfWork, ILogger<RefundController> logger,IMailService mailService)
         {
             _logger = logger;
             _unitOfWork = unitOfWork;
+            _mailService = mailService;
         }
 
         [HttpPost]
@@ -48,6 +51,19 @@ namespace arts_core.Controllers
         {
             var result = await _unitOfWork.RefundRepository.GetRefundById(refundId);
             return Ok(result);
+        }
+        [HttpGet("testMail")]
+        public async Task<IActionResult> Test()
+        {
+            _ = _mailService.SendMail(new MailRequestNhan("ngodinhtan1997@gmail.com", "Xin chao", "<h1>Your refund has been requested</h1>"))
+                .ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        _logger.LogError(t.Exception, "Some Exception in Test");
+                    }
+                });
+            return Ok("");
         }
     }
 }

@@ -151,5 +151,16 @@ namespace arts_core.Controllers
             return Ok(customPaging);
         }
 
+        [HttpPut]
+        [Route("update-variants")]
+        [Authorize(Roles = "Admin, Employee")]
+        public async Task<IActionResult> UpdateVariants([FromBody] IEnumerable<VariantUpdate> variantUpdates)
+        {
+            var customResult = await _unitOfWork.ProductRepository.UpdateVariants(variantUpdates);
+
+            return Ok(customResult);
+        }
+
+
     }
 }
