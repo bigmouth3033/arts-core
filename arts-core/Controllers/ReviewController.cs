@@ -73,5 +73,16 @@ namespace arts_core.Controllers
             return Ok(reviews);
         }
 
+        [HttpDelete]
+        [Route("delete-review")]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> DeleteReview(int reviewId)
+        {
+
+            var reviews = await _unitOfWork.ReviewRepository.DeleteReviewByAdmin(reviewId);
+            _unitOfWork.SaveChanges();
+            return Ok(reviews);
+        }
     }
 }

@@ -12,6 +12,8 @@ namespace arts_core.Interfaces
         Task<CustomResult> CreateReview(int userId, RequestModels.RequestReview requestRequest);
         Task<CustomResult> CheckReview(int userId, int productId);
         Task<CustomResult> TotalStar(int productId);
+        Task<CustomResult> DeleteReviewByAdmin(int reviewId);
+
 
     }
     public class ReviewRepository : GenericRepository<Review>, IReviewRepository
@@ -30,9 +32,10 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var order = await _context.Orders.Include(v => v.Variant).ThenInclude(p => p.Product).Where(o => o.UserId == userId && o.Variant.Product.Id == productId && o.OrderStatusId == 16 && o.ReviewId == null).Select((o)=> o.Id).ToListAsync();
+                var order = await _context.Orders.Include(v => v.Variant).ThenInclude(p => p.Product).Where(o => o.UserId == userId && o.Variant.Product.Id == productId && o.OrderStatusId == 16 && o.ReviewId == null).Select((o) => o.Id).ToListAsync();
                 return new CustomResult(200, "success", order);
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new CustomResult(400, "fail", null);
 
@@ -119,7 +122,8 @@ namespace arts_core.Interfaces
                 };
                 return customPaging;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return new CustomPaging()
                 {
                     Status = 400,
@@ -139,7 +143,7 @@ namespace arts_core.Interfaces
 
             try
             {
-                var reviews = await _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Include(p=>p.Product).ThenInclude(p=>p.ProductImages).Include(o => o.ReviewImages).Where(u=>u.UserId ==userId).OrderByDescending(r => r.CreatedAt).AsNoTracking().ToListAsync();
+                var reviews = await _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Include(p => p.Product).ThenInclude(p => p.ProductImages).Include(o => o.ReviewImages).Where(u => u.UserId == userId).OrderByDescending(r => r.CreatedAt).AsNoTracking().ToListAsync();
                 return new CustomResult(200, "success", reviews);
             }
             catch (Exception ex)
@@ -152,14 +156,46 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var totalStar = await _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Where(r => r.Order.Variant.ProductId == productId).GroupBy(o=>o.Rating).Select(o=>new{
+                var totalStar = await _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Where(r => r.Order.Variant.ProductId == productId).GroupBy(o => o.Rating).Select(o => new
+                {
                     star = o.Key,
                     amount = o.Count(),
                 }).ToListAsync();
                 return new CustomResult(200, "success", totalStar);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return new CustomResult(400, "fail", null);
+            }
+        }
+        public async Task<CustomResult> DeleteReviewByAdmin(int reviewId)
+        {
+            try
+            {
+                var review = await _context.Reviews
+                                           .Include(r => r.ReviewImages)
+                                           .Where(r => r.Id == reviewId)
+                                           .SingleOrDefaultAsync();
+                if (review != null)
+                {
+                    if (review.ReviewImages != null && review.ReviewImages.Any())
+                    {
+                        _context.ReviewImages.RemoveRange(review.ReviewImages);
+                    }
+                    var order = await _context.Orders.Where(o => o.ReviewId == reviewId).SingleOrDefaultAsync();
+                    order.ReviewId = null;
+
+
+                    _context.Reviews.Remove(review);
+                    _context.Orders.Update(order);
+                    return new CustomResult(200, "success", review);
+                }
+
+                return new CustomResult(404, "Review not found", null);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(500, "Fail", null);
             }
         }
     }

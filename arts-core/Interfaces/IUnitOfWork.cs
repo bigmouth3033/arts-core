@@ -55,15 +55,15 @@ namespace arts_core.Interfaces
             PaymentRepository = paymentRepository;
             RefundRepository = refundRepository;
         }
-
+        public void SaveChanges()
+        {
+            _dataContext.SaveChanges();
+        }
         public void Dispose()
         {
             _dataContext.Dispose();
         }
 
-        public void SaveChanges()
-        {
-            _dataContext.SaveChanges();
-        }
+       
     }
 }
