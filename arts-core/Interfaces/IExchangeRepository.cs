@@ -11,16 +11,19 @@ namespace arts_core.Interfaces
         Task<CustomResult> UpdateExchangeAsync(UpdateExchangeRequest request);
 
         Task<CustomResult> GetExchangeById(int exchangeId);
+        Task<CustomResult> GetUserExchangeById(int userId, int exchangeId);
     }
 
     public class ExchangeRepository : GenericRepository<Exchange>, IExchangeRepository
     {
         private readonly ILogger<ExchangeRepository> _logger;
+        private readonly IMailService _mailService;
         private readonly IFileService _fileService;
-        public ExchangeRepository(ILogger<ExchangeRepository> logger, DataContext dataContext, IFileService fileService) : base(dataContext)
+        public ExchangeRepository(ILogger<ExchangeRepository> logger, DataContext dataContext, IFileService fileService, IMailService service) : base(dataContext)
         {
             _logger = logger;
             _fileService = fileService;
+            _mailService = service;
         }
 
         public async Task<CustomResult> CreateExchangeAsync(ExchangeRequest request)
@@ -87,12 +90,40 @@ namespace arts_core.Interfaces
             }
         }
 
+        public async Task<CustomResult> GetUserExchangeById(int userId, int exchangeId)
+        {
+            try
+            {
+                var exchange = await _context.Exchanges.Include(e => e.Images).SingleOrDefaultAsync(e => e.Id == exchangeId && e.OriginalOrder.UserId == userId);
+
+                return new CustomResult(200, "Success", exchange);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
         public async Task<CustomResult> UpdateExchangeAsync(UpdateExchangeRequest request)
         {
             using var transaction = _context.Database.BeginTransaction();
             try
             {
-                var exchange = await _context.Exchanges.FirstOrDefaultAsync(e => e.Id == request.ExchangeId);
+                var exchange = await _context.Exchanges
+                    .Include(e => e.OriginalOrder)
+                    .Include(e => e.OriginalOrder.Payment)
+                    .Include(e => e.OriginalOrder.User)
+                    .Include(e => e.OriginalOrder.Variant.Product)
+                    .FirstOrDefaultAsync(e => e.Id == request.ExchangeId);
+
+                var email = exchange.OriginalOrder.User.Email;
+                var fullname = exchange.OriginalOrder.User.Fullname;
+                var orderCode = exchange.OriginalOrder.OrderCode;
+                string subject = "Arts Notification";
+                string body = $"<h1>Dear {fullname}</h1>" +
+                    $"<p>Your exchange with OrderId {orderCode} has been  {request.Status}</p>" +
+                    $"<p>Reason: {request.ResponseExchange}</p>";
+                var mailRequest = new MailRequestNhan(email, subject, body);
 
                 if (exchange.Status == "Success" || exchange.Status == "Denied")
                     return new CustomResult(402, "Cannot Update Exchange again", null);
@@ -104,6 +135,15 @@ namespace arts_core.Interfaces
                     _context.Exchanges.Update(exchange);
                     var reulst = await _context.SaveChangesAsync();
                     transaction.Commit();
+
+                    _ = _mailService.SendMail(mailRequest)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            _logger.LogError(t.Exception, "Some Exception in Test");
+                        }
+                    });
                     return new CustomResult(201, "Update Exchange denid Successfully", null);
                 }
 
@@ -130,13 +170,21 @@ namespace arts_core.Interfaces
                 var variant = await _context.Variants.FirstOrDefaultAsync(v => v.Id == oldOrderExchange.VariantId);
                 variant.Quanity -= newOrderExchange.Quanity;
                 variant.AvailableQuanity -= newOrderExchange.Quanity;
-
                 if (variant.AvailableQuanity < 0 || variant.AvailableQuanity < 0)
                     return new CustomResult(401, $"Quanity of this product lower than 0 please update variant before Exchange", null);
 
                 _context.Variants.Update(variant);
                 _context.Exchanges.Update(exchange);
                 await _context.SaveChangesAsync();
+                _ = _mailService.SendMail(mailRequest)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            _logger.LogError(t.Exception, "Some Exception in Test");
+                        }
+                    });
+
                 transaction.Commit();
             }
             catch (Exception ex)
@@ -147,6 +195,7 @@ namespace arts_core.Interfaces
             }
             return new CustomResult(200, "gaga", null);
         }
+
     }
     public class ExchangeRequest
     {

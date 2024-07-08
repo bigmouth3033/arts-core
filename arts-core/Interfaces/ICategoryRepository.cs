@@ -1,6 +1,7 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
 
 namespace arts_core.Interfaces
 {
@@ -10,7 +11,7 @@ namespace arts_core.Interfaces
 
         CustomResult CreateNewCategory(Category category);
 
-        
+        Task<CustomResult> GetSaleByCategory(string option);
     }
 
     public class CategoryRepository : GenericRepository<Category>, ICategoryRepository
@@ -47,6 +48,60 @@ namespace arts_core.Interfaces
             }catch(Exception ex)
             {
                 return new CustomResult(400, "bad request", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> GetSaleByCategory(string option)
+        {
+            try
+            {
+                var query = _context.Orders
+                    .Include(p => p.Refund)
+                    .Include(p => p.Exchange)
+                    .Include(p => p.Variant.Product.Category)
+                    .Where(o => o.OrderStatusId == 16 && o.Refund == null && o.Exchange == null);
+
+                if (option == "today")
+                {
+                    var startOfToday = DateTime.Today;
+                    var startOfTomorrow = DateTime.Today.AddDays(1);
+                    query = query.Where(o => o.UpdatedAt >= startOfToday && o.UpdatedAt < startOfTomorrow);
+                }
+
+                if (option == "thisweek")
+                {
+                    var today = DateTime.Today;
+                    var endOfThisWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+                    var startOfThisWeek = endOfThisWeek.AddDays(-7);
+                    query = query.Where(o => o.UpdatedAt >= startOfThisWeek && o.UpdatedAt < endOfThisWeek);
+                }
+
+                if (option == "lastweek")
+                {
+                    var today = DateTime.Today;
+                    var endOfLastWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday - 7);
+                    var startOfLastWeek = endOfLastWeek.AddDays(-7);
+                    query = query.Where(o => o.UpdatedAt >= startOfLastWeek && o.UpdatedAt < endOfLastWeek);
+                }
+
+
+                var groupedQuery = query.GroupBy(o => o.Variant.Product.Category.Name)
+                                        .Select(o => new
+                                        {
+                                            Id = o.Key,
+                                            Label = o.Key,
+                                            Value = o.Sum(o => o.TotalPrice)
+                                        });
+                          
+                var result = await groupedQuery.ToListAsync();
+
+                return new CustomResult(200, "Success", result);
+
+
+
+            } catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
             }
         }
     }

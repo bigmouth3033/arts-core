@@ -141,6 +141,20 @@ namespace arts_core.Controllers
             return Ok(customResult);
         }
 
+        [HttpPut]
+        [Route("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromForm]ChangePasswordRequest changePasswordRequest)
+        {
+            int userId;
+            string idClaim;
+            idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+            int.TryParse(idClaim, out userId);
+
+            var customResult = await _unitOfWork.UserRepository.ChangePassword(userId, changePasswordRequest);
+
+            return Ok(customResult);
+        }
 
     }
 }

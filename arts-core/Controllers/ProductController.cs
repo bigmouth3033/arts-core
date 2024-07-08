@@ -31,9 +31,9 @@ namespace arts_core.Controllers
         [HttpGet]
         [Authorize(Roles = "Admin, Employee")]
         [Route("admin-products")]
-        public async Task<IActionResult> GetProducts([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] IEnumerable<int> categoryId, [FromQuery] string searchValue ="")
+        public async Task<IActionResult> GetProducts([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] IEnumerable<int> categoryId, [FromQuery] string filterOption, [FromQuery] string searchValue ="")
         {
-            var customPaging = await _unitOfWork.ProductRepository.GetPagingProducts(pageNumber, pageSize, categoryId,searchValue);
+            var customPaging = await _unitOfWork.ProductRepository.GetPagingProducts(pageNumber, pageSize, categoryId,searchValue, filterOption);
 
             return Ok(customPaging);
         }
@@ -129,7 +129,7 @@ namespace arts_core.Controllers
         [Route("get-best-seller")]
         public async Task<IActionResult> GetBestSeller()
         {
-            var customResult = await _unitOfWork.ProductRepository.GetBestSellect();
+            var customResult = await _unitOfWork.ProductRepository.GetBestSeller();
             return Ok(customResult);
         }
 

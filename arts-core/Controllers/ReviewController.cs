@@ -44,9 +44,9 @@ namespace arts_core.Controllers
         }
         [HttpGet]
         [Route("allReview")]
-        public async Task<IActionResult> GetAllReview([FromQuery] int productId, [FromQuery] int pageNumber, [FromQuery] int pageSize, int star)
+        public async Task<IActionResult> GetAllReview([FromQuery] int productId, [FromQuery] int pageNumber, [FromQuery] int pageSize, int star, [FromQuery] string search = "")
         {
-            var listReview = await _unitOfWork.ReviewRepository.GetAllReviewProductAsync(productId, pageNumber, pageSize, star);
+            var listReview = await _unitOfWork.ReviewRepository.GetAllReviewProductAsync(productId, pageNumber, pageSize, star, search);
             return Ok(listReview);
         }
         [HttpGet]
@@ -71,5 +71,16 @@ namespace arts_core.Controllers
             return Ok(reviews);
         }
 
+        [HttpDelete]
+        [Route("delete-review")]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> DeleteReview([FromQuery]int reviewId)
+        {
+
+            var reviews = await _unitOfWork.ReviewRepository.DeleteReviewByAdmin(reviewId);
+            _unitOfWork.SaveChanges();
+            return Ok(reviews);
+        }
     }
 }

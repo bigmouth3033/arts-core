@@ -1,5 +1,6 @@
 ﻿using arts_core.Interfaces;
 using arts_core.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,6 +53,22 @@ namespace arts_core.Controllers
             var result = await _unitOfWork.RefundRepository.GetRefundById(refundId);
             return Ok(result);
         }
+
+        [HttpGet]
+        [Route("get-user-refund")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetUserRefundById([FromQuery] int refundId)
+        {
+            int userId;
+            string idClaim;
+            idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+            int.TryParse(idClaim, out userId);
+
+            var result = await _unitOfWork.RefundRepository.GetUserRefundById(userId, refundId);
+            return Ok(result);
+        }
+
+
         [HttpGet("testMail")]
         public async Task<IActionResult> Test()
         {

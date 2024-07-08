@@ -1,4 +1,6 @@
-﻿namespace arts_core.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace arts_core.Models
 {
     public class Variant
     {
@@ -18,6 +20,29 @@
         public virtual ICollection<Type>? Types { get; set; }
         public ICollection<User>? Users { get; set; }
 
- 
+
+        [NotMapped]
+        public string VariantCode
+        {
+            get
+            {
+                var categoryId = Product?.CategoryId;
+                if (categoryId < 10)
+                {
+                    return "0" + categoryId + PadLeftVariantId();
+                }
+                return categoryId.ToString();
+            }
+        }
+
+        private string PadLeftVariantId()
+        {
+            var variantString = Id.ToString();
+            if (variantString.Length < 5)
+            {
+                return variantString.PadLeft(5, '0');
+            }
+            return variantString;
+        }
     }
 }

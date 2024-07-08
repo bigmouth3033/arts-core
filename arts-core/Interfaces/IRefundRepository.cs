@@ -12,6 +12,7 @@ namespace arts_core.Interfaces
         Task<CustomResult> GetAllRefundsAsync();
         Task<CustomResult> UpdateRefundAsync(RefundReQuestForAdmin request);
         Task<CustomResult> GetRefundById(int refundId);
+        Task<CustomResult> GetUserRefundById(int userId, int refundId);
 
     }
     public class RefundRepository : GenericRepository<Refund>, IRefundRepository
@@ -114,7 +115,12 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var refund = await _context.Refunds.FindAsync(request.RefundId);
+                var refund = await _context.Refunds
+                    .Include(r => r.Order)
+                    .Include(r => r.Order.Payment)
+                    .Include(r => r.Order.User)
+                    .Include(r => r.Order.Variant.Product)
+                    .FirstOrDefaultAsync(r => r.Id == request.RefundId);
                 if (refund == null)
                     return new CustomResult(400, "Refund Not Found", null);
 
@@ -126,6 +132,26 @@ namespace arts_core.Interfaces
                 refund.UpdatedAt = DateTime.Now;
                 _context.Refunds.Update(refund);
                 await _context.SaveChangesAsync();
+
+                /// send Mail
+                var name = refund.Order.User.Fullname;
+                var email = refund.Order.User.Email;
+                var orderCode = refund.Order.OrderCode;
+                string subject = "Arts Notification";
+                string body = $"<h1>Dear {name}</h1>" +
+                    $"<p>Your refund with OrderId {orderCode} has been  {request.Status}</p>" +
+                    $"<p>Reason: {request.ResponseRefund}</p>";
+                var mailRequest = new MailRequestNhan(email, subject, body);
+
+                _ = _mailService.SendMail(mailRequest)
+              .ContinueWith(t =>
+              {
+                  if (t.IsFaulted)
+                  {
+                      _logger.LogError(t.Exception, "Some Exception in Test");
+                  }
+              });
+
                 return new CustomResult(200, "Update refund is Sucess", null);
             }
             catch (Exception ex)
@@ -135,6 +161,8 @@ namespace arts_core.Interfaces
             }
 
         }
+
+    
 
         private bool isOrderOlderThan7Days(Order order)
         {
@@ -151,6 +179,21 @@ namespace arts_core.Interfaces
                 return new CustomResult(200, "Success", refund);
 
             }catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> GetUserRefundById(int userId, int refundId)
+        {
+            try
+            {
+                var refund = await _context.Refunds.Include(r => r.Images).Include(r => r.Order).SingleOrDefaultAsync(r => r.Id == refundId && r.Order.UserId == userId);
+
+                return new CustomResult(200, "Success", refund);
+
+            }
+            catch (Exception ex)
             {
                 return new CustomResult(400, "Failed", ex.Message);
             }

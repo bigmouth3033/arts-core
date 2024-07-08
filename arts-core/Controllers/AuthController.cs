@@ -1,4 +1,5 @@
 ﻿using arts_core.Interfaces;
+using arts_core.RequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
@@ -19,7 +20,7 @@ namespace arts_core.Controllers
 
         [HttpPost]
         [Route("admin-login")]
-        public async Task<IActionResult> AdminLogin([FromForm] LoginRequest account)
+        public async Task<IActionResult> AdminLogin([FromForm] RequestLogin account)
         {
             var customResult = await _unitOfWork.UserRepository.AdminLogin(account);
 
@@ -28,7 +29,7 @@ namespace arts_core.Controllers
 
         [HttpPost]
         [Route("customer-login")]
-        public async Task<IActionResult> Customer([FromForm] LoginRequest account)
+        public async Task<IActionResult> Customer([FromForm] RequestLogin account)
         {
             var customResult = await _unitOfWork.UserRepository.CustomerLogin(account);
 

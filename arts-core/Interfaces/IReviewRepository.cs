@@ -6,11 +6,13 @@ namespace arts_core.Interfaces
 {
     public interface IReviewRepository : IRepository<Review>
     {
-        Task<CustomPaging> GetAllReviewProductAsync(int productId, int pageNumber, int pageSize, int star);
+        Task<CustomPaging> GetAllReviewProductAsync(int productId, int pageNumber, int pageSize, int star, string search);
         Task<CustomResult> GetAllReviewProductByUserAsync(int userId);
         Task<CustomResult> CreateReview(int userId, RequestModels.RequestReview requestRequest);
         Task<CustomResult> CheckReview(int userId, int productId);
         Task<CustomResult> TotalStar(int productId);
+
+        Task<CustomResult> DeleteReviewByAdmin(int reviewId);
 
     }
     public class ReviewRepository : GenericRepository<Review>, IReviewRepository
@@ -90,15 +92,25 @@ namespace arts_core.Interfaces
 
 
 
-        public async Task<CustomPaging> GetAllReviewProductAsync(int productId, int pageNumber, int pageSize, int star)
+        public async Task<CustomPaging> GetAllReviewProductAsync(int productId, int pageNumber, int pageSize, int star, string search)
         {
             try
             {
-                var reviews = _context.Reviews.Include(o => o.Order).ThenInclude(o => o.Variant).Include(o => o.User).Include(o => o.ReviewImages).Where(r => r.Order.Variant.ProductId == productId).OrderByDescending(r => r.CreatedAt).AsNoTracking();
+                var reviews = _context.Reviews
+                    .Include(o => o.User)
+                    .Include(o => o.ReviewImages)
+                    .Where(r => r.ProductId == productId)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .AsNoTracking();
 
                 if (star != 0)
                 {
                     reviews = reviews.Where(r => r.Rating == star);
+                }
+
+                if(search.Length != 0)
+                {
+                    reviews = reviews.Where(r => r.Comment.Contains(search) || r.User.Fullname.Contains(search));
                 }
 
                 var total = reviews.Count();
@@ -162,6 +174,37 @@ namespace arts_core.Interfaces
             catch (Exception ex)
             {
                 return new CustomResult(400, "fail", null);
+            }
+        }
+
+        public async Task<CustomResult> DeleteReviewByAdmin(int reviewId)
+        {
+            try
+            {
+                var review = await _context.Reviews
+                                           .Include(r => r.ReviewImages)
+                                           .Where(r => r.Id == reviewId)
+                                           .SingleOrDefaultAsync();
+                if (review != null)
+                {
+                    if (review.ReviewImages != null && review.ReviewImages.Any())
+                    {
+                        _context.ReviewImages.RemoveRange(review.ReviewImages);
+                    }
+                    var order = await _context.Orders.Where(o => o.ReviewId == reviewId).SingleOrDefaultAsync();
+                    order.ReviewId = null;
+
+
+                    _context.Reviews.Remove(review);
+                    _context.Orders.Update(order);
+                    return new CustomResult(200, "success", review);
+                }
+
+                return new CustomResult(404, "Review not found", null);
+            }
+            catch (Exception ex)
+            {
+                return new CustomResult(500, "Fail", null);
             }
         }
     }

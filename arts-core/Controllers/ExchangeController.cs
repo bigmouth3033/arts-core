@@ -41,5 +41,19 @@ namespace arts_core.Controllers
             var result = await _unitOfWork.ExchangeRepository.GetExchangeById(exchangeId);
             return Ok(result);
         }
+
+        [HttpGet]
+        [Route(" ")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetUserExchangeById([FromQuery] int exchangeId)
+        {
+            int userId;
+            string idClaim;
+            idClaim = User.Claims.FirstOrDefault(c => c.Type == "Id").Value;
+            int.TryParse(idClaim, out userId);
+
+            var result = await _unitOfWork.ExchangeRepository.GetUserExchangeById(userId,exchangeId);
+            return Ok(result);
+        }
     }
 }

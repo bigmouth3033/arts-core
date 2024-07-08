@@ -24,11 +24,20 @@ namespace arts_core.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromForm]Category category)
+        public IActionResult Create([FromForm] Category category)
         {
-            var customResult  = _unitOfWork.CategoryRepository.CreateNewCategory(category);
+            var customResult = _unitOfWork.CategoryRepository.CreateNewCategory(category);
 
             _unitOfWork.SaveChanges();
+
+            return Ok(customResult);
+        }
+
+        [HttpGet]
+        [Route("get-sale")]
+        public async Task<IActionResult> GetSaleByCategory([FromQuery] string option)
+        {
+            var customResult= await _unitOfWork.CategoryRepository.GetSaleByCategory(option);
 
             return Ok(customResult);
         }

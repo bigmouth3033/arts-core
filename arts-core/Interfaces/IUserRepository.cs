@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -22,9 +23,9 @@ namespace arts_core.Interfaces
         void UpdateOwner(User owner);
         void DeleteOwner(User owner);
 
-        Task<User> ManagerAuthenticate(LoginRequest account);
+        Task<User> ManagerAuthenticate(RequestLogin account);
 
-        Task<CustomResult> AdminLogin(LoginRequest account);
+        Task<CustomResult> AdminLogin(RequestLogin account);
 
         Task<CustomResult> GetAdmin(string email);
 
@@ -40,9 +41,9 @@ namespace arts_core.Interfaces
 
         Task<CustomResult> CreateCustomer(CreateCustomer account);
 
-        Task<CustomResult> CustomerLogin(LoginRequest account);
+        Task<CustomResult> CustomerLogin(RequestLogin account);
 
-        Task<User> CustomerAuthenticate(LoginRequest account);
+        Task<User> CustomerAuthenticate(RequestLogin account);
 
         Task<CustomResult> GetUser(string email);
 
@@ -54,13 +55,12 @@ namespace arts_core.Interfaces
         Task<CustomResult> DeactivateEmployee(int userId);
 
         Task<CustomResult> GetEmployee(int userId);
-
         Task<CustomResult> UpdateEmployee(RequestEmployeeUpdate info);
-
         Task<CustomResult> SendMail(RequestModels.MailRequest request);
         Task<CustomResult> VerifyAccount(string email);
-
         Task<CustomResult> GetAllUserId();
+
+        Task<CustomResult> ChangePassword(int userId, ChangePasswordRequest changePasswordRequest);
 
     }
 
@@ -102,7 +102,7 @@ namespace arts_core.Interfaces
             return await _context.Users.FindAsync(ownerId);
         }
 
-        public async Task<User> ManagerAuthenticate(LoginRequest account)
+        public async Task<User> ManagerAuthenticate(RequestLogin account)
         {
             try
             {
@@ -148,13 +148,19 @@ namespace arts_core.Interfaces
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<CustomResult> AdminLogin(LoginRequest account)
+        public async Task<CustomResult> AdminLogin(RequestLogin account)
         {
             var user = await ManagerAuthenticate(account);
 
+        
             if (user == null)
             {
                 return new CustomResult(404, "Not Found", null);
+            }
+
+            if (user.RoleTypeId == 5 && user.Active == false)
+            {
+                return new CustomResult(401, "Account is not active", null);
             }
 
             var token = CreateToken(user);
@@ -167,6 +173,11 @@ namespace arts_core.Interfaces
             var user = await _context.Users.Include(u => u.RoleType).SingleOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
+            {
+                return new CustomResult(400, "Bad Request", null);
+            }
+
+            if(user != null && user.RoleTypeId == 5 && user.Active == false)
             {
                 return new CustomResult(400, "Bad Request", null);
             }
@@ -272,6 +283,16 @@ namespace arts_core.Interfaces
 
                 _context.Users.Add(employee);
 
+                _ = _mailService.SendMail(new MailRequestNhan(account.Email, "New employee",
+                $"<h1>Your employee account has been created</h1><p>Your password is {account.Password}</p>"))
+            .ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    _logger.LogError(t.Exception, "Some Exception in Test");
+                }
+            });
+
                 return new CustomResult(200, "success", employee);
             }
             catch (Exception ex)
@@ -336,16 +357,6 @@ namespace arts_core.Interfaces
 
                 var token = CreateToken(customer);
 
-
-                var mailRequest = new MailRequest
-                {
-                    ToEmail = customer.Email,
-                    Subject = "Verify Email",
-                    Body = $"<h1>Thank you for registering</h1>" +
-                           $"<p>Please verify your email by clicking the following link: " +
-                           $"<a href='{_config["AppSettings:ClientURL"]}?token={token}'>Verify Email</a></p>"
-                };
-
                 _ = _mailService.SendMail(new MailRequestNhan(customer.Email, "Verify Email",
                     $"<h1>Thank you for registering</h1>" +
                            $"<p>Please verify your email by clicking the following link: " +
@@ -358,8 +369,6 @@ namespace arts_core.Interfaces
                     }
                 });
 
-                await _mailService.SendEmailAsync(mailRequest);
-
                 return new CustomResult(200, "Account created successfully. Please verify your email.", customer);
             }
             catch (Exception ex)
@@ -368,7 +377,7 @@ namespace arts_core.Interfaces
             }
         }
 
-        public async Task<CustomResult> CustomerLogin(LoginRequest account)
+        public async Task<CustomResult> CustomerLogin(RequestLogin account)
         {
             var user = await CustomerAuthenticate(account);
 
@@ -382,7 +391,7 @@ namespace arts_core.Interfaces
             return new CustomResult(200, "token", token);
         }
 
-        public async Task<User> CustomerAuthenticate(LoginRequest account)
+        public async Task<User> CustomerAuthenticate(RequestLogin account)
         {
             try
             {
@@ -485,6 +494,8 @@ namespace arts_core.Interfaces
                 var employee = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
 
                 employee.Active = true;
+
+                
 
                 return new CustomResult(200, "Succes", employee);
             }
@@ -618,6 +629,31 @@ namespace arts_core.Interfaces
             {
 
                 return new CustomResult(400, "Failed", ex.Message);
+            }
+        }
+
+        public async Task<CustomResult> ChangePassword(int userId, ChangePasswordRequest changePasswordRequest)
+        {
+            try
+            {
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId);
+
+                if(!BCrypt.Net.BCrypt.Verify(changePasswordRequest.PreviousPassword, user.Password))
+                {
+                    return new CustomResult(400, "Wrong password", null);
+                }
+
+                user.Password = BCrypt.Net.BCrypt.HashPassword(changePasswordRequest.NewPassword);
+
+                _context.Users.Update(user);
+
+                await _context.SaveChangesAsync();
+
+                return new CustomResult(200, "Success", null);
+
+            }catch(Exception ex)
+            {
+                return new CustomResult(400, "Failed", null);
             }
         }
     }

@@ -1,4 +1,6 @@
-﻿namespace arts_core.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace arts_core.Models
 {
     public class Order
     {
@@ -22,5 +24,28 @@
         public string? CancelReason {  get; set; }
         public int? ReviewId {  get; set; }
         public Review? Review { get; set; }
+
+        [NotMapped]
+        public string OrderCode
+        {
+            get
+            {
+                var deleveryIdCodeString = Payment?.DeliveryTypeId;
+                var variantIdCodeString = Variant?.VariantCode;
+                var orderIdCodeString = PadLeftOrderId();
+
+                return deleveryIdCodeString + variantIdCodeString + orderIdCodeString;
+            }
+        }
+
+        private string PadLeftOrderId()
+        {
+            var orderIdString = Id.ToString();
+            if (orderIdString.Length < 8)
+            {
+                return orderIdString.PadLeft(8, '0');
+            }
+            return orderIdString;
+        }
     }
 }
