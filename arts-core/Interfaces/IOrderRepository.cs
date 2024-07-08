@@ -22,39 +22,23 @@ namespace arts_core.Interfaces
           List<string> delivery,
           string from,
          string to, string fromDate, string toDate);
-
         Task<CustomResult> AcceptOrder(ICollection<int> orderId);
-
         Task<CustomResult> DenyOrder(ICollection<int> orderId);
-
         Task<CustomResult> DeliveryOrder(ICollection<int> orderId);
-
         Task<CustomResult> OrderSuccess(ICollection<int> orderId);
-
         Task<CustomResult> OrderDetail(int orderId);
-
         Task<CustomPaging> GetCustomerOrders(int userId, int pageNumber, int pageSize, string active, string search);
-
         Task<CustomResult> GetOrderDetail(int userId, int orderId);
-
         Task<CustomResult> CancelOrder(int userId, int orderId, string reason);
-
         Task<CustomPaging> GetOrderRefund(int pageNumber, int pageSize, string active);
-
         Task<CustomPaging> GetOrderExchage(int pageNumber, int pageSize, string active);
-
         public Task<CustomResult> GetMonthlyRevenue(int year);
-
         public Task<CustomResult> GetOrderRevenue(string option);
-
         public Task<CustomResult> GetNumberOfOrder(string option);
-
         public Task<CustomResult> GetRecentOrder();
-
         public CustomResult GetOrderDashBoard();
-
         public Task<CustomPaging> GetUserRefundExchange(int userId, int pageNumber, int pageSize, string active);
-
+        Task<List<Order>> GetOrdersByDateAsync(DateTime dateFrom, DateTime dateTo);
     }
     public class OrderRepository : GenericRepository<Order>, IOrderRepository
     {
@@ -234,20 +218,20 @@ namespace arts_core.Interfaces
 
 
 
-                query = query.Include(o => o.User)
-                      .Include(o => o.OrderStatusType)
-                      .Include(o => o.Variant)
-                          .ThenInclude(v => v.Product)
-                            .ThenInclude(p => p.Category);
-
-
-                query = query.Include(o => o.Payment)
+                query = query
+                       .AsNoTracking()
+                       .AsSingleQuery()
+                       .Include(o => o.User)
+                       .Include(o => o.OrderStatusType)
+                       .Include(o => o.Variant)
+                       .ThenInclude(v => v.Product)
+                       .ThenInclude(p => p.Category)
+                       .Include(o => o.Payment)
                        .ThenInclude(p => p.PaymentType)
-                   .Include(o => o.Payment)
+                       .Include(o => o.Payment)
                        .ThenInclude(p => p.DeliveryType)
-                   .Include(o => o.Payment)
-                       .ThenInclude(p => p.Address).AsNoTracking();
-
+                       .Include(o => o.Payment)
+                       .ThenInclude(p => p.Address);
 
                 query = query.OrderByDescending(o => o.UpdatedAt);
 
@@ -783,7 +767,7 @@ namespace arts_core.Interfaces
                     .Include(p => p.Refund)
                     .Include(p => p.Exchange)
                     .Include(p => p.Variant.Product.Category)
-                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Denied" ) && (o.Exchange == null && o.Exchange.Status != "Denied")  && o.NewOrderExchange == null);
+                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Success" ) && (o.Exchange == null && o.Exchange.Status != "Denied")  && o.NewOrderExchange == null);
 
 
                 if (option == "today")
@@ -909,7 +893,9 @@ namespace arts_core.Interfaces
         {
             try
             {
-                var query = _context.Orders.AsNoTracking()
+                var query = _context.Orders
+                        .AsNoTracking()
+                        .AsSingleQuery()
                        .Include(o => o.User)
                        .Include(o => o.OrderStatusType)
                        .Include(o => o.Variant)
@@ -1009,6 +995,26 @@ namespace arts_core.Interfaces
                     Data = ex.Message
                 };
             }
+        }
+
+        public async Task<List<Order>> GetOrdersByDateAsync(DateTime dateFrom, DateTime dateTo)
+        {
+            var orders = await _context.Orders
+                .AsNoTracking()
+                .Include(o => o.OrderStatusType)
+                .Include(o => o.Payment)
+                .Include(o => o.Variant.Product)
+                .Include(o => o.Exchange)
+                .Include(p => p.Refund)
+                .Where(o =>
+                o.OrderStatusId == 16 &&
+                o.CreatedAt.Date >= dateFrom.Date && o.CreatedAt < dateTo.Date &&
+                 (o.Exchange == null || o.Exchange.Status != "Denied") &&
+                o.NewOrderExchange == null &&
+                (o.Refund == null || o.Refund.Status != "Success"))
+                .OrderBy(o => o.Id)
+                .ToListAsync();
+            return orders;
         }
     }
 }

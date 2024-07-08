@@ -1,8 +1,10 @@
-﻿using arts_core.Interfaces;
+﻿using arts_core.Extensions;
+using arts_core.Interfaces;
 using arts_core.RequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace arts_core.Controllers
 {
@@ -224,6 +226,52 @@ namespace arts_core.Controllers
             var customPaging = await _unitOfWork.OrderRepository.GetUserRefundExchange(userId, pageNumber, pageSize, active);
 
             return Ok(customPaging);
+        }
+
+        [HttpPost("FileResult")]
+        public async Task<FileResult> ExportFile([FromBody] ReportRequest reportRequest)
+        {
+            string csv = string.Empty;
+            string[] columnOrdersNames = ["Id", "UserId", "VariantId", "Quanity", "OrderStatusId", "TotalPrice", "PaymentId", "CreatedAt", "UpdatedAt"];
+            string[] columnVariantsCountName = ["VariantId", "Number of sales", "Total Quanity"];
+            var orders = await _unitOfWork.OrderRepository.GetOrdersByDateAsync(reportRequest.DateFrom, reportRequest.DateTo);
+            var totalPrice = orders.CalculateTotalPrice();
+            var variantscount = orders.GetVariantsCountOfOrders();
+            csv += "Date From" + ',' + reportRequest.DateFrom + ',' + "Date To" + ',' + reportRequest.DateTo + "\r\n";
+            foreach (string columnName in columnOrdersNames)
+            {
+                csv += columnName + ',';
+            }
+            csv += ',';
+            foreach (string columnName in columnVariantsCountName)
+            {
+                csv += columnName + ',';
+            }
+            csv += "\r\n";
+
+            for (int i = 0; i < orders.Count; i++)
+            {
+                csv += $"`{orders[i].OrderCode.ToString().Replace(",", ";")}" + ',';
+                csv += orders[i].UserId.ToString().Replace(",", ";") + ',';
+                csv += $"`{orders[i].Variant.VariantCode.ToString().Replace(",", ";")}" + ',';
+                csv += orders[i].Quanity.ToString().Replace(",", ";") + ',';
+                csv += orders[i].OrderStatusType.Name.ToString().Replace(",", ";") + ',';
+                csv += orders[i].TotalPrice.ToString().Replace(",", ";") + ',';
+                csv += orders[i].PaymentId.ToString().Replace(",", ";") + ',';
+                csv += orders[i].CreatedAt.ToString().Replace(",", ";") + ',';
+                csv += orders[i].UpdatedAt.ToString().Replace(",", ";") + ',';
+                csv += ',';
+                if (i < variantscount.Count)
+                {
+                    csv += $"`{variantscount[i].VariantCode.ToString().Replace(",", ";")}" + ',';
+                    csv += variantscount[i].Count.ToString().Replace(",", ";") + ',';
+                    csv += variantscount[i].TotalQuanity.ToString().Replace(",", ";") + ',';
+                }
+                csv += "\r\n";
+            }
+            csv += "Revenue" + ',' + totalPrice;
+            byte[] bytes = Encoding.ASCII.GetBytes(csv);
+            return File(bytes, "text/csv", "Order.csv");
         }
     }
 }

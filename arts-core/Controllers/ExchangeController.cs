@@ -43,7 +43,7 @@ namespace arts_core.Controllers
         }
 
         [HttpGet]
-        [Route(" ")]
+        [Route("user-exchange-by-id")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> GetUserExchangeById([FromQuery] int exchangeId)
         {

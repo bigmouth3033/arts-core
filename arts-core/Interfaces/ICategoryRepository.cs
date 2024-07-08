@@ -1,7 +1,9 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.Runtime.CompilerServices;
+
 
 namespace arts_core.Interfaces
 {
@@ -70,17 +72,17 @@ namespace arts_core.Interfaces
 
                 if (option == "thisweek")
                 {
-                    var today = DateTime.Today;
-                    var endOfThisWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-                    var startOfThisWeek = endOfThisWeek.AddDays(-7);
+                    var today = DateTime.Now;
+                    var startOfThisWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+                    var endOfThisWeek = startOfThisWeek.AddDays(7);
                     query = query.Where(o => o.UpdatedAt >= startOfThisWeek && o.UpdatedAt < endOfThisWeek);
                 }
 
                 if (option == "lastweek")
                 {
-                    var today = DateTime.Today;
-                    var endOfLastWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday - 7);
-                    var startOfLastWeek = endOfLastWeek.AddDays(-7);
+                    var today = DateTime.Now;
+                    var startOfLastWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday - 7);
+                    var endOfLastWeek = startOfLastWeek.AddDays(7);
                     query = query.Where(o => o.UpdatedAt >= startOfLastWeek && o.UpdatedAt < endOfLastWeek);
                 }
 
@@ -104,5 +106,17 @@ namespace arts_core.Interfaces
                 return new CustomResult(400, "Failed", ex.Message);
             }
         }
+
+        private static int GetWeekOfYear(DateTime date)
+        {
+            CultureInfo cultureInfo = CultureInfo.CurrentCulture;
+            Calendar calendar = cultureInfo.Calendar;
+            CalendarWeekRule weekRule = cultureInfo.DateTimeFormat.CalendarWeekRule;
+            DayOfWeek firstDayOfWeek = cultureInfo.DateTimeFormat.FirstDayOfWeek;
+
+            return calendar.GetWeekOfYear(date, weekRule, firstDayOfWeek);
+        }
     }
+
+  
 }
