@@ -1,6 +1,7 @@
 ﻿using arts_core.Data;
 using arts_core.Models;
 using arts_core.ReturnModels;
+using arts_core.Service;
 using MailKit.Search;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -43,9 +44,11 @@ namespace arts_core.Interfaces
     public class OrderRepository : GenericRepository<Order>, IOrderRepository
     {
         private readonly ILogger<OrderRepository> _logger;
-        public OrderRepository(ILogger<OrderRepository> logger, DataContext dataContext) : base(dataContext)
+        private readonly IMailService _mailService;
+        public OrderRepository(ILogger<OrderRepository> logger, DataContext dataContext, IMailService mailService) : base(dataContext)
         {
             _logger = logger;
+            _mailService = mailService;
         }
 
         public async Task<CustomResult> AcceptOrder(ICollection<int> orderId)
@@ -54,16 +57,32 @@ namespace arts_core.Interfaces
             {
                 foreach (var item in orderId)
                 {
-                    var order = await _context.Orders.SingleOrDefaultAsync(o => o.Id == item);
+                    var order = await _context.Orders.Include(o => o.User).SingleOrDefaultAsync(o => o.Id == item);
 
                     if (order.OrderStatusId != 13)
                     {
                         return new CustomResult(400, "current status is not pending", null);
                     }
+                    
+               
 
                     order.OrderStatusId = 14;
                     order.UpdatedAt = DateTime.Now;
                     _context.Orders.Update(order);
+
+                    string subject = "Arts Notification";
+                    string body = $"<h1>Dear {order.User.Fullname}</h1>" +
+                        $"<p>Your Order with OrderId {order.OrderCode} has been accepted</p>";
+                    var mailRequest = new MailRequestNhan(order.User.Email, subject, body);
+
+                    _ = _mailService.SendMail(mailRequest)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            _logger.LogError(t.Exception, "Some Exception in Test");
+                        }
+                    });
                 }
 
                 await _context.SaveChangesAsync();
@@ -117,7 +136,7 @@ namespace arts_core.Interfaces
             {
                 foreach (var item in orderId)
                 {
-                    var order = await _context.Orders.SingleOrDefaultAsync(o => o.Id == item);
+                    var order = await _context.Orders.Include(o => o.User).SingleOrDefaultAsync(o => o.Id == item);
 
                     if (order.OrderStatusId != 14)
                     {
@@ -133,6 +152,20 @@ namespace arts_core.Interfaces
                     order.UpdatedAt = DateTime.Now;
                     _context.Orders.Update(order);
                     _context.Variants.Update(variant);
+
+                    string subject = "Arts Notification";
+                    string body = $"<h1>Dear {order.User.Fullname}</h1>" +
+                        $"<p>Your Order with OrderId {order.OrderCode} has been delivery</p>";
+                    var mailRequest = new MailRequestNhan(order.User.Email, subject, body);
+
+                    _ = _mailService.SendMail(mailRequest)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            _logger.LogError(t.Exception, "Some Exception in Test");
+                        }
+                    });
                 }
 
                 await _context.SaveChangesAsync();
@@ -151,7 +184,7 @@ namespace arts_core.Interfaces
             {
                 foreach (var item in orderId)
                 {
-                    var order = await _context.Orders.SingleOrDefaultAsync(o => o.Id == item);
+                    var order = await _context.Orders.Include(o => o.User).SingleOrDefaultAsync(o => o.Id == item);
 
                     if (order.OrderStatusId != 13)
                     {
@@ -166,6 +199,20 @@ namespace arts_core.Interfaces
 
                     order.UpdatedAt = DateTime.Now;
                     _context.Orders.Update(order);
+
+                    string subject = "Arts Notification";
+                    string body = $"<h1>Dear {order.User.Fullname}</h1>" +
+                        $"<p>Your Order with OrderId {order.OrderCode} has been denied</p>";
+                    var mailRequest = new MailRequestNhan(order.User.Email, subject, body);
+
+                    _ = _mailService.SendMail(mailRequest)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            _logger.LogError(t.Exception, "Some Exception in Test");
+                        }
+                    });
                 }
 
                 await _context.SaveChangesAsync();
@@ -229,9 +276,9 @@ namespace arts_core.Interfaces
                        .Include(o => o.Payment)
                        .ThenInclude(p => p.PaymentType)
                        .Include(o => o.Payment)
-                       .ThenInclude(p => p.DeliveryType)
-                       .Include(o => o.Payment)
-                       .ThenInclude(p => p.Address);
+                       .ThenInclude(p => p.DeliveryType);
+                  
+                      
 
                 query = query.OrderByDescending(o => o.UpdatedAt);
 
@@ -304,7 +351,7 @@ namespace arts_core.Interfaces
                 }
 
 
-                var total = query.Count();
+                var total = await query.CountAsync();
 
                 query = query.Skip((pageNumber - 1) * pageSize)
                         .Take(pageSize);
@@ -704,7 +751,7 @@ namespace arts_core.Interfaces
             {
                 foreach (var item in orderId)
                 {
-                    var order = await _context.Orders.SingleOrDefaultAsync(o => o.Id == item);
+                    var order = await _context.Orders.Include(o => o.Variant.Product).Include(p => p.User).SingleOrDefaultAsync(o => o.Id == item);
 
                     if (order.OrderStatusId != 17)
                     {
@@ -716,6 +763,21 @@ namespace arts_core.Interfaces
                   
                     order.UpdatedAt = DateTime.Now;
                     _context.Orders.Update(order);
+
+                    string subject = "Arts Notification";
+                    string body = $"<h1>Dear {order.User.Fullname}</h1>" +
+                        $"<p>Your Order with OrderId {order.OrderCode} has been success delivery</p>"
+                        + (order.Variant.Product.WarrantyDuration != 0 && order.Variant.Product.WarrantyDuration != null ? $"<p>Your product have {order.Variant.Product.WarrantyDuration} month of warranty</p>" : "");
+                    var mailRequest = new MailRequestNhan(order.User.Email, subject, body);
+
+                    _ = _mailService.SendMail(mailRequest)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            _logger.LogError(t.Exception, "Some Exception in Test");
+                        }
+                    });
                 }
 
                 await _context.SaveChangesAsync();
@@ -737,7 +799,7 @@ namespace arts_core.Interfaces
                     .Include(p => p.Exchange)
                     .Include(p => p.Variant.Product.Category)
                     .Where(o => o.UpdatedAt.Year == year)
-                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Denied") && (o.Exchange == null && o.Exchange.Status != "Denied") && o.NewOrderExchange == null);
+                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Success") && (o.Exchange == null || o.Exchange.Status != "Success") && o.NewOrderExchange == null);
 
                 DateTimeFormatInfo dtfi = new DateTimeFormatInfo();
 
@@ -767,7 +829,7 @@ namespace arts_core.Interfaces
                     .Include(p => p.Refund)
                     .Include(p => p.Exchange)
                     .Include(p => p.Variant.Product.Category)
-                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Success" ) && (o.Exchange == null && o.Exchange.Status != "Denied")  && o.NewOrderExchange == null);
+                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Success" ) && (o.Exchange == null || o.Exchange.Status != "Success")  && o.NewOrderExchange == null);
 
 
                 if (option == "today")
@@ -779,17 +841,17 @@ namespace arts_core.Interfaces
 
                 if (option == "thisweek")
                 {
-                    var today = DateTime.Today;
-                    var endOfThisWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-                    var startOfThisWeek = endOfThisWeek.AddDays(-7);
+                    var today = DateTime.Now;
+                    var startOfThisWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+                    var endOfThisWeek = startOfThisWeek.AddDays(7);
                     query = query.Where(o => o.UpdatedAt >= startOfThisWeek && o.UpdatedAt < endOfThisWeek);
                 }
 
                 if (option == "lastweek")
                 {
-                    var today = DateTime.Today;
-                    var endOfLastWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday - 7);
-                    var startOfLastWeek = endOfLastWeek.AddDays(-7);
+                    var today = DateTime.Now;
+                    var startOfLastWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday - 7);
+                    var endOfLastWeek = startOfLastWeek.AddDays(7);
                     query = query.Where(o => o.UpdatedAt >= startOfLastWeek && o.UpdatedAt < endOfLastWeek);
                 }
 
@@ -819,7 +881,7 @@ namespace arts_core.Interfaces
                     .Include(p => p.Refund)
                     .Include(p => p.Exchange)
                     .Include(p => p.Variant.Product.Category)
-                    .Where(o => o.OrderStatusId == 16 && o.Exchange == null);
+                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Success") && (o.Exchange == null || o.Exchange.Status != "Success") && o.NewOrderExchange == null);
 
                 if (option == "today")
                 {
@@ -830,17 +892,17 @@ namespace arts_core.Interfaces
 
                 if (option == "thisweek")
                 {
-                    var today = DateTime.Today;
-                    var endOfThisWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-                    var startOfThisWeek = endOfThisWeek.AddDays(-7);
+                    var today = DateTime.Now;
+                    var startOfThisWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+                    var endOfThisWeek = startOfThisWeek.AddDays(7);
                     query = query.Where(o => o.UpdatedAt >= startOfThisWeek && o.UpdatedAt < endOfThisWeek);
                 }
 
                 if (option == "lastweek")
                 {
-                    var today = DateTime.Today;
-                    var endOfLastWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday - 7);
-                    var startOfLastWeek = endOfLastWeek.AddDays(-7);
+                    var today = DateTime.Now;
+                    var startOfLastWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday - 7);
+                    var endOfLastWeek = startOfLastWeek.AddDays(7);
                     query = query.Where(o => o.UpdatedAt >= startOfLastWeek && o.UpdatedAt < endOfLastWeek);
                 }
 
@@ -870,14 +932,13 @@ namespace arts_core.Interfaces
 
                 var dashBoardInfo = new OrderDashBoard()
                 {
-                    SuccessOrder = query.Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Denied") && (o.Exchange == null && o.Exchange.Status != "Denied") && o.NewOrderExchange == null).Count(),
+                    SuccessOrder = query.Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Success") && (o.Exchange == null || o.Exchange.Status != "Success") && o.NewOrderExchange == null).Count(),
                     CancelOrder = query.Where(o => o.IsCancel == true).Count(),
                     DeliveryOrder = query.Where(o => o.OrderStatusId == 17).Count(),
                     AcceptedOrder = query.Where(o => o.OrderStatusId == 14 && o.IsCancel == false).Count(),
                     DeniedOrder = query.Where(o => o.OrderStatusId == 15).Count(),
                     ExchangeOrder = query.Where(o => o.Exchange != null && o.Exchange.Status == "Success").Count(),
                     RefundOrder = query.Where(o => o.Refund != null && o.Refund.Status == "Success").Count(),
-
                 };
 
                 return new CustomResult(200, "Success", dashBoardInfo);
@@ -897,18 +958,11 @@ namespace arts_core.Interfaces
                         .AsNoTracking()
                         .AsSingleQuery()
                        .Include(o => o.User)
-                       .Include(o => o.OrderStatusType)
                        .Include(o => o.Variant)
-                           .ThenInclude(v => v.Product)
-                           .ThenInclude(p => p.ProductImages)
+                       .ThenInclude(v => v.Product)
+                       .ThenInclude(p => p.ProductImages)
                        .Include(o => o.Variant)
-                           .ThenInclude(v => v.VariantAttributes)
-                       .Include(o => o.Payment)
-                            .ThenInclude(p => p.PaymentType)
-                       .Include(o => o.Payment)
-                            .ThenInclude(p => p.DeliveryType)
-                       .Include(o => o.Payment)
-                            .ThenInclude(p => p.Address);
+                       .ThenInclude(v => v.VariantAttributes);
 
                 var orderedQuery = query.OrderByDescending(o => o.UpdatedAt).Take(5);
 

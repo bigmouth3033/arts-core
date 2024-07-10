@@ -61,7 +61,7 @@ namespace arts_core.Interfaces
                     .Include(p => p.Refund)
                     .Include(p => p.Exchange)
                     .Include(p => p.Variant.Product.Category)
-                    .Where(o => o.OrderStatusId == 16 && o.Refund == null && o.Exchange == null);
+                    .Where(o => o.OrderStatusId == 16 && (o.Refund == null || o.Refund.Status != "Success") && (o.Exchange == null || o.Exchange.Status != "Success") && o.NewOrderExchange == null);
 
                 if (option == "today")
                 {

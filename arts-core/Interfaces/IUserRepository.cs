@@ -553,7 +553,7 @@ namespace arts_core.Interfaces
 
                 if (employee != null)
                 {
-                    employee.Password = info.Password != null ? BCrypt.Net.BCrypt.HashPassword(info.Password) : employee.Password;
+                    employee.Password =( info.Password != null && info.Password != "") ? BCrypt.Net.BCrypt.HashPassword(info.Password) : employee.Password;
                     employee.Address = info.Address;
                     employee.PhoneNumber = info.Phone;
                     employee.Fullname = info.FullName;
