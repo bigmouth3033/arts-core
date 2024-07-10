@@ -290,9 +290,9 @@ namespace arts_core.Interfaces
                 var users = await _context.Users.Where(u => u.RoleTypeId == 6).ToListAsync();
                 foreach (var user in users)
                 {
-                    for (int i = 0; i < 20; i++)
+                    for (int i = 0; i < 5; i++)
                     {
-                        int randomVariant = random.Next(1, 263);
+                        int randomVariant = random.Next(264, 326);
 
                         var variant = await _context.Variants.Where(v => v.Id == randomVariant).SingleOrDefaultAsync();
                         var quanityVariantOrder = 1;
@@ -306,13 +306,12 @@ namespace arts_core.Interfaces
                             var randomDate = GetRandomDate();
                             var payment = new Payment()
                             {
-                                DeliveryTypeId = 1,
+                                DeliveryTypeId = random.Next(1, 3),
                                 AddressId = addressUser.Id,
-                                PaymentTypeId = 7,
+                                PaymentTypeId = random.Next(7, 11),
                                 ShipFee = 5,
                                 CreatedAt = randomDate,
                             };
-
 
 
                             var review = new Review()
@@ -416,8 +415,8 @@ namespace arts_core.Interfaces
 
         private DateTime GetRandomDate()
         {
-            DateTime startDate = new DateTime(2024, 5, 1);
-            DateTime endDate = new DateTime(2024, 7, 4);
+            DateTime startDate = new DateTime(2024, 4, 1);
+            DateTime endDate = new DateTime(2024, 7, 11);
 
             Random random = new Random();
             int range = (endDate - startDate).Days;
