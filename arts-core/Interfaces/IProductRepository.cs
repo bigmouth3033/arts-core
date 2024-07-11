@@ -353,7 +353,7 @@ namespace arts_core.Interfaces
              .Any(v => v.Orders
              .Where(o => o.ReviewId != null) // Ensure that ReviewId is not null
              .SelectMany(o => _context.Reviews.Where(r => r.Id == o.ReviewId)) // Select the review object
-             .SelectMany(r => (double?)r.Rating) // Convert rating to nullable double
+             .Select(r => (double?)r.Rating) // Convert rating to nullable double
              .DefaultIfEmpty() // Handle cases where there are no reviews
              .Average() >= ratingStar)); // Calculate average rating
             }
