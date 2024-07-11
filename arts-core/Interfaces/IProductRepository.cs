@@ -420,9 +420,11 @@ namespace arts_core.Interfaces
             {
                 var productsWithRatings = await _context.Products
                     .AsNoTracking()
+                    .AsSingleQuery()
                     .Include(p => p.ProductImages)
                     .Include(p => p.Variants)
                     .Include(p => p.Reviews)
+                    .Where(p => p.IsActive == true)
                     .Select(p => new ProductWithRating
                     {
                         Product = p,
@@ -432,7 +434,6 @@ namespace arts_core.Interfaces
                     })
                     .Where(p => p.Product.Name.Contains(searchValue))
                     .OrderByDescending(p => p.Product.Id)
-                    .AsSingleQuery()
                     .Take(5)
                     .ToListAsync();
                 
@@ -452,6 +453,7 @@ namespace arts_core.Interfaces
                      .Include(p => p.ProductImages)
                      .Include(p => p.Variants)
                      .Include(p => p.Reviews)
+                     .Where(p => p.IsActive == true)
                      .OrderByDescending(p => p.CreatedAt)
                      .ThenBy(p => p.Id);
 
@@ -490,6 +492,7 @@ namespace arts_core.Interfaces
                       .Include(p => p.ProductImages)
                       .Include(p => p.Variants)
                       .Include(p => p.Reviews)
+                      .Where(p => p.IsActive == true)
                       .OrderByDescending(p => p.Variants.SelectMany(v => v.Orders).Count())
                       .ThenBy(p => p.Id);
 
@@ -530,6 +533,7 @@ namespace arts_core.Interfaces
                        .Include(p => p.ProductImages)
                        .Include(p => p.Variants)
                        .Include(p => p.Reviews)
+                       .Where(p => p.IsActive == true)
                        .OrderByDescending(p => p.Reviews.Average(r => (double?)r.Rating) ?? 0.0)
                        .ThenBy(p => p.Id); 
                
@@ -590,6 +594,7 @@ namespace arts_core.Interfaces
             {
                 var baseQuery = _context.Products
                     .AsNoTracking()
+                    .Where(p => p.IsActive == true)
                     .Where(q => q.CategoryId == categoryId && q.Id != excludedId)
                     .Include(p => p.ProductImages)
                     .Include(p => p.Variants)
@@ -658,7 +663,8 @@ namespace arts_core.Interfaces
                   .AsNoTracking()
                   .Include(p => p.ProductImages)
                   .Include(p => p.Variants)
-                  .Include(p => p.Reviews);
+                  .Include(p => p.Reviews)
+                  .Where(p => p.IsActive == true);
 
                 if (categoryId != 0)
                 {
