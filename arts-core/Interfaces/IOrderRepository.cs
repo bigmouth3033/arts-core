@@ -994,7 +994,8 @@ namespace arts_core.Interfaces
                        .Include(o => o.Payment.Address)
                        .Include(o => o.Refund)
                        .Include(o => o.Exchange)
-                       .Include(o => o.NewOrderExchange);
+                       .Include(o => o.NewOrderExchange)
+                       .Where(o => o.User.Id == userId);
 
                 query = query.Where(o => o.Refund != null || o.Exchange != null || o.NewOrderExchange != null);
 
