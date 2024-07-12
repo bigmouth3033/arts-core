@@ -308,28 +308,37 @@ namespace arts_core.Interfaces
 
                 foreach (var item in userCheckedItems)
                 {
-                    var order = new Order
-                    {
-                        UserId = userId,
-                        VariantId = item.VariantId,
-                        Quanity = item.Quanity,
-                        OrderStatusId = 13,
-                        Payment = payment,
-                        TotalPrice = item.Quanity * item.Variant.Price
-                    };
-
                     var variant = await _context.Variants.SingleOrDefaultAsync(p => p.Id == item.VariantId);
 
-                    variant.AvailableQuanity -= item.Quanity;
+                    if (item.Quanity <= variant.AvailableQuanity)
+                    {
+                        var order = new Order
+                        {
+                            UserId = userId,
+                            VariantId = item.VariantId,
+                            Quanity = item.Quanity,
+                            OrderStatusId = 13,
+                            Payment = payment,
+                            TotalPrice = item.Quanity * item.Variant.Price
+                        };
 
-                    _context.Variants.Update(variant);
+                        variant.AvailableQuanity -= item.Quanity;
 
-                    _context.Orders.Add(order);
+                        _context.Variants.Update(variant);
 
-                    _context.Carts.Remove(item);
+                        _context.Orders.Add(order);
+
+                        _context.Carts.Remove(item);
+                    }
+                    else
+                    {
+                        return new CustomResult(400, "Create payment faillll", "Some of your product donot have enough quatity");
+                    }
+                    
                 }
-                
+                await _context.SaveChangesAsync();
                 return new CustomResult(200, "Create payment success", payment);
+
             }
             catch (Exception ex)
             {

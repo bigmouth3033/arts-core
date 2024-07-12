@@ -180,7 +180,6 @@ namespace arts_core.Controllers
 
             var customResult = await _unitOfWork.CartRepository.CreatePayment(userId, paymentRequest);
 
-           _unitOfWork.SaveChanges();
             return Ok(customResult);
 
         }

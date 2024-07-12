@@ -912,6 +912,7 @@ namespace arts_core.Interfaces
                                         Date = o.Key,
                                         Value = o.Count()
                                     });
+
                 groupedQuery = groupedQuery.OrderBy(g => g.Date);
 
                 var result = await groupedQuery.ToListAsync();
