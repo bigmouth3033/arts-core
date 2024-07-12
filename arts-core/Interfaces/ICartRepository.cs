@@ -16,7 +16,6 @@ namespace arts_core.Interfaces
         Task<CustomResult> GetTotalAmountByUserId(int userId);
         Task<CustomResult> UpdateAllCartCheckedAsync(int userId, bool isCheckedState);
         Task<CustomResult> UpdateCartCheckedByIdAsync(int cartId, bool isCheckedState);
-
         Task<CustomResult> CreatePayment(int userId, PaymentRequest paymentRequest);
 
     }

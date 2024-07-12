@@ -11,11 +11,11 @@ namespace arts_core.Extensions
         public static List<VariantsCount> GetVariantsCountOfOrders(this List<Order> orders)
         {
             var variantscount = orders
-              .GroupBy(o => o.Variant)
+              .GroupBy(o => o.VariantId)
               .Select(g => new VariantsCount
               {
-                  VariantId = g.Key.Id,
-                  VariantCode = g.Key.VariantCode,
+                  VariantId = g.Key,
+                  VariantCode = g.Key.ToString(),
                   Count = g.Count(),
                   TotalQuanity = g.Sum(v => v.Quanity)
               })
